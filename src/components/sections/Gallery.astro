@@ -1,49 +1,47 @@
 ---
-import { getImage, Image } from "astro:assets";
+import { Image } from "astro:assets";
 import type { SiteConfig } from "../../config/types";
 import Icon from "../ui/Icon.astro";
 import Section from "../ui/Section.astro";
 import SectionHeading from "../ui/SectionHeading.astro";
-import { formatIndex, resolveUi } from "../../lib/i18n";
+import ImageFallback from "../ui/ImageFallback.astro";
+import { figurePreset, fullSize } from "../../lib/images";
+import { pageLanguage } from "../../lib/language";
+import type { SectionSlot } from "../../lib/sections";
 
 interface Props {
   site: SiteConfig;
+  section: SectionSlot;
 }
 
-const { site } = Astro.props;
+const { site, section } = Astro.props;
 const gallery = site.gallery;
-const ui = resolveUi(site);
-const locale = site.meta.locale;
+const language = pageLanguage(site);
+const ui = language.t;
+
+const thumb = figurePreset("thumb");
 
 const items = gallery
   ? await Promise.all(
-      gallery.items.map(async (item) => {
-        const full = item.image
-          ? await getImage({
-              src: item.image,
-              width: Math.min(1800, item.image.width),
-              format: "webp",
-              quality: 82,
-            })
-          : undefined;
-
-        return {
-          ...item,
-          full: full?.src,
-        };
-      }),
+      gallery.items.map(async (item) => ({
+        ...item,
+        full: item.image ? await fullSize(item.image) : undefined,
+      })),
     )
   : [];
+
+// A photograph is openable exactly when it has a thumbnail and a full-size URL.
+const openable = items.filter((item) => item.image && item.full);
 ---
 
 {
   gallery && (
-    <Section id="gallery" labelledby="gallery-title">
+    <Section id={section.id} labelledby={section.headingId}>
       <SectionHeading
         eyebrow={gallery.eyebrow}
         headline={gallery.headline}
         intro={gallery.intro}
-        id="gallery-title"
+        id={section.headingId}
       />
 
       <div class="gallery__columns" data-gallery>
@@ -63,10 +61,10 @@ const items = gallery
                   <Image
                     src={item.image}
                     alt={item.alt}
-                    widths={[360, 540, 720, 1080]}
-                    sizes="(min-width: 1120px) 31vw, (min-width: 560px) 47vw, 100vw"
+                    widths={[...thumb.widths]}
+                    sizes={thumb.sizes}
                     format="webp"
-                    quality={80}
+                    quality={thumb.quality}
                     loading="lazy"
                     decoding="async"
                     style={`object-position:${item.position ?? "50% 50%"}`}
@@ -80,28 +78,31 @@ const items = gallery
                 </span>
               </button>
             ) : (
-              <div class="gallery__image" style="aspect-ratio: 4 / 3">
-                <div class="media__fallback" role="img" aria-label={`${item.alt} (${ui.imageUnavailable})`}>
-                  <span class="media__fallback-mark" aria-hidden="true">—</span>
-                  <span class="caption">{ui.imageUnavailable}</span>
-                </div>
+              <div
+                class="gallery__image"
+                style={`aspect-ratio:${thumb.ratio}`}
+                role="img"
+                aria-label={`${item.alt} (${ui.imageUnavailable})`}
+              >
+                <ImageFallback label={ui.imageUnavailable} />
               </div>
             )}
           </figure>
         ))}
       </div>
 
-      {gallery.note && <p class="gallery__note">{gallery.note}</p>}
+      {gallery.note && <p class="section-note">{gallery.note}</p>}
 
       <dialog
         class="lightbox"
         aria-label={ui.gallery.viewer}
         data-lightbox
-        data-locale={locale}
+        data-locale={language.lang}
+        data-direction={language.direction}
       >
         <div class="lightbox__bar">
           <span class="lightbox__counter" data-lightbox-counter aria-hidden="true">
-            {formatIndex(1, locale)} / {formatIndex(items.length, locale)}
+            {language.index(1)} / {language.index(openable.length)}
           </span>
           <button
             class="lightbox__close"
@@ -142,84 +143,7 @@ const items = gallery
 }
 
 <script>
-  const galleryRoot = document.querySelector<HTMLElement>("[data-gallery]");
-  const dialog = document.querySelector<HTMLDialogElement>("[data-lightbox]");
+  import { initLightbox } from "../../lib/client/lightbox";
 
-  if (galleryRoot && dialog) {
-    const triggers = Array.from(
-      galleryRoot.querySelectorAll<HTMLButtonElement>("[data-gallery-open]"),
-    );
-
-    if (triggers.length) {
-      const image = dialog.querySelector<HTMLImageElement>("[data-lightbox-image]");
-      const caption = dialog.querySelector<HTMLElement>("[data-lightbox-caption]");
-      const counter = dialog.querySelector<HTMLElement>("[data-lightbox-counter]");
-      const closeButton = dialog.querySelector<HTMLButtonElement>("[data-lightbox-close]");
-      const previous = dialog.querySelector<HTMLButtonElement>("[data-lightbox-prev]");
-      const next = dialog.querySelector<HTMLButtonElement>("[data-lightbox-next]");
-
-      let index = 0;
-
-      const locale = dialog.dataset.locale || "en";
-      const format = new Intl.NumberFormat(locale, {
-        minimumIntegerDigits: 2,
-        useGrouping: false,
-      });
-      const isRtl = document.documentElement.dir === "rtl";
-
-      const render = () => {
-        const trigger = triggers[index];
-        if (!trigger || !image) return;
-
-        image.src = trigger.dataset.full ?? "";
-        image.alt = trigger.dataset.alt ?? "";
-        image.hidden = false;
-
-        if (caption) {
-          caption.textContent = trigger.dataset.caption || trigger.dataset.alt || "";
-        }
-        if (counter) {
-          counter.textContent = `${format.format(index + 1)} / ${format.format(triggers.length)}`;
-        }
-      };
-
-      const show = (nextIndex: number) => {
-        index = (nextIndex + triggers.length) % triggers.length;
-        render();
-      };
-
-      triggers.forEach((trigger, triggerIndex) => {
-        trigger.addEventListener("click", () => {
-          show(triggerIndex);
-          if (!dialog.open) dialog.showModal();
-        });
-      });
-
-      closeButton?.addEventListener("click", () => dialog.close());
-      previous?.addEventListener("click", () => show(index - 1));
-      next?.addEventListener("click", () => show(index + 1));
-
-      dialog.addEventListener("keydown", (event) => {
-        if (event.key === "ArrowLeft") {
-          event.preventDefault();
-          show(index + (isRtl ? 1 : -1));
-        }
-        if (event.key === "ArrowRight") {
-          event.preventDefault();
-          show(index + (isRtl ? -1 : 1));
-        }
-      });
-
-      dialog.addEventListener("click", (event) => {
-        if (event.target === dialog) dialog.close();
-      });
-
-      dialog.addEventListener("close", () => {
-        if (image) {
-          image.hidden = true;
-          image.removeAttribute("src");
-        }
-      });
-    }
-  }
+  initLightbox();
 </script>

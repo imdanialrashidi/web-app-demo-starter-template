@@ -3,23 +3,25 @@ import type { SiteConfig } from "../../config/types";
 import Button from "../ui/Button.astro";
 import Section from "../ui/Section.astro";
 import SectionHeading from "../ui/SectionHeading.astro";
+import type { SectionSlot } from "../../lib/sections";
 
 interface Props {
   site: SiteConfig;
+  section: SectionSlot;
 }
 
-const { site } = Astro.props;
+const { site, section } = Astro.props;
 const pricing = site.pricing;
 ---
 
 {
   pricing && (
-    <Section id="pricing" labelledby="pricing-title" tone="surface">
+    <Section id={section.id} labelledby={section.headingId} tone="surface">
       <SectionHeading
         eyebrow={pricing.eyebrow}
         headline={pricing.headline}
         intro={pricing.intro}
-        id="pricing-title"
+        id={section.headingId}
       />
 
       <div class="pricing__list">
@@ -51,7 +53,7 @@ const pricing = site.pricing;
         ))}
       </div>
 
-      {pricing.note && <p class="pricing__note">{pricing.note}</p>}
+      {pricing.note && <p class="section-note">{pricing.note}</p>}
 
       {pricing.action && (
         <div class="pricing__cta">

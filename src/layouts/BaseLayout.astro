@@ -1,13 +1,13 @@
 ---
-import { getImage } from "astro:assets";
 import "../styles/global.css";
 import type { SiteConfig } from "../config/types";
 import { site as activeSite } from "../config/site";
 import Footer from "../components/layout/Footer.astro";
 import Header from "../components/layout/Header.astro";
-import { themeCss, themeFontFaces } from "../lib/theme";
-import { ogLocale, resolveDirection } from "../lib/i18n";
-import { base, withBase } from "../lib/url";
+import { themeFor } from "../lib/theme";
+import { socialCard } from "../lib/images";
+import { pageLanguage } from "../lib/language";
+import { href, pagePath } from "../lib/url";
 
 interface Props {
   title?: string;
@@ -24,40 +24,22 @@ const {
 } = Astro.props;
 
 const siteUrl = Astro.site ?? new URL(Astro.url.origin);
-const baseWithoutSlash = base.endsWith("/") ? base.slice(0, -1) : base;
-
-function withDeploymentBase(pathname: string) {
-  if (!baseWithoutSlash) return pathname;
-  if (pathname === baseWithoutSlash || pathname.startsWith(`${baseWithoutSlash}/`)) {
-    return pathname;
-  }
-  return withBase(pathname);
-}
-
-const canonical = new URL(withDeploymentBase(Astro.url.pathname), siteUrl).href;
-const fonts = themeFontFaces(site.theme);
-const direction = resolveDirection(site);
+const canonical = new URL(pagePath(Astro.url.pathname), siteUrl).href;
+const { css: themeStyles, preloads } = themeFor(site.theme);
+const language = pageLanguage(site);
 
 let ogImageUrl: string | undefined;
 let ogImageAlt: string | undefined;
 
 if (!noindex && site.hero.image.src) {
-  const socialImage = await getImage({
-    src: site.hero.image.src,
-    width: 1200,
-    height: 630,
-    fit: "cover",
-    format: "jpg",
-    quality: 82,
-  });
-  const socialPath = withDeploymentBase(socialImage.src);
+  const socialPath = pagePath(await socialCard(site.hero.image.src));
   ogImageUrl = new URL(socialPath, siteUrl).href;
   ogImageAlt = site.hero.image.alt;
 }
 ---
 
 <!doctype html>
-<html lang={site.meta.locale} dir={direction}>
+<html lang={language.lang} dir={language.direction}>
   <head>
     <script is:inline>document.documentElement.classList.add("js");</script>
     <meta charset="utf-8" />
@@ -70,29 +52,23 @@ if (!noindex && site.hero.image.src) {
     <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
     {site.meta.keywords && <meta name="keywords" content={site.meta.keywords.join(", ")} />}
     <link rel="canonical" href={canonical} />
-    <link rel="icon" href={withBase("/favicon.svg")} type="image/svg+xml" />
-    <link rel="apple-touch-icon" href={withBase("/apple-touch-icon.png")} />
+    <link rel="icon" href={href("/favicon.svg")} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={href("/apple-touch-icon.png")} />
 
     {
-      fonts.map((face) => (
-        <link
-          rel="preload"
-          href={face.src}
-          as="font"
-          type="font/woff2"
-          crossorigin="anonymous"
-        />
+      preloads.map((src) => (
+        <link rel="preload" href={src} as="font" type="font/woff2" crossorigin="anonymous" />
       ))
     }
 
-    <style is:inline set:html={themeCss(site.theme)} />
+    <style is:inline set:html={themeStyles} />
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={site.brand.name} />
-    <meta property="og:locale" content={ogLocale(site.meta.locale)} />
+    <meta property="og:locale" content={language.ogLocale} />
     {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
     {ogImageUrl && <meta property="og:image:width" content="1200" />}
     {ogImageUrl && <meta property="og:image:height" content="630" />}

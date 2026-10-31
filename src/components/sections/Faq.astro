@@ -1,29 +1,31 @@
 ---
 import type { SiteConfig } from "../../config/types";
-import Eyebrow from "../ui/Eyebrow.astro";
-import HeadlineText from "../ui/Headline.astro";
 import Icon from "../ui/Icon.astro";
 import Section from "../ui/Section.astro";
+import SectionHeading from "../ui/SectionHeading.astro";
+import type { SectionSlot } from "../../lib/sections";
 
 interface Props {
   site: SiteConfig;
+  section: SectionSlot;
 }
 
-const { site } = Astro.props;
+const { site, section } = Astro.props;
 const faq = site.faq;
 ---
 
 {
   faq && (
-    <Section id="faq" labelledby="faq-title">
+    <Section id={section.id} labelledby={section.headingId}>
       <div class="faq__layout">
-        <div class="faq__head">
-          <Eyebrow text={faq.eyebrow} />
-          <h2 id="faq-title" class="display display--lg">
-            <HeadlineText headline={faq.headline} />
-          </h2>
-          {faq.intro && <p class="lede">{faq.intro}</p>}
-        </div>
+        <SectionHeading
+          eyebrow={faq.eyebrow}
+          headline={faq.headline}
+          intro={faq.intro}
+          id={section.headingId}
+          layout="aside"
+          sticky
+        />
 
         <div class="faq__list">
           {faq.items.map((item, index) => (

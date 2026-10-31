@@ -1,24 +1,25 @@
 ---
 import type { SiteConfig } from "../../config/types";
-import { formatYear, resolveUi } from "../../lib/i18n";
-import { base } from "../../lib/url";
+import { pageLanguage } from "../../lib/language";
+import { hasSection, pageFor } from "../../lib/sections";
+import { base, href } from "../../lib/url";
 import Logo from "../ui/Logo.astro";
-
-const anchorHref = (href: string) =>
-  href.startsWith("#") ? `${base}${href}` : href;
 
 interface Props {
   site: SiteConfig;
 }
 
 const { site } = Astro.props;
-const ui = resolveUi(site);
-const year = formatYear(site.meta.locale);
-const contact = site.contact;
+const language = pageLanguage(site);
+const ui = language.t;
+const page = pageFor(site);
+const year = language.year();
+const contact = hasSection(page, "contact") ? site.contact : undefined;
 
-const footerLinks = [...site.navigation, { label: ui.contact, href: "#contact" }].filter(
-  (item, index, items) => items.findIndex((candidate) => candidate.href === item.href) === index,
-);
+const footerLinks = [
+  ...page.navigation,
+  ...(contact ? [{ label: ui.contact, anchor: "#contact" as const }] : []),
+].filter((item, index, items) => items.findIndex((candidate) => candidate.anchor === item.anchor) === index);
 ---
 
 <footer class="site-footer">
@@ -33,13 +34,13 @@ const footerLinks = [...site.navigation, { label: ui.contact, href: "#contact" }
         <div>
           <p class="footer__heading">{ui.explore}</p>
           <div class="footer__links">
-            {footerLinks.map((item) => <a href={anchorHref(item.href)}>{item.label}</a>)}
+            {footerLinks.map((item) => <a href={href(item.anchor)}>{item.label}</a>)}
           </div>
         </div>
         <div>
           <p class="footer__heading">{ui.elsewhere}</p>
           <div class="footer__links">
-            <a href={`${base}#top`}>{ui.backToTop}</a>
+            <a href={href("#hero")}>{ui.backToTop}</a>
             <a href={site.footer.photoCredit.href} target="_blank" rel="noreferrer">
               {site.footer.photoCredit.label}
             </a>

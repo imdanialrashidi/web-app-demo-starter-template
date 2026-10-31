@@ -1,13 +1,24 @@
 import type { Direction, SiteConfig, UiStrings } from "../config/types";
+import { localeFormatters, type LocaleFormatters } from "./format";
 
 /**
- * Locale-aware defaults for interface copy and formatted values.
+ * The page language: interface copy for the locale, the direction and language
+ * tag it implies, and locale-aware formatting — built once from the config.
  *
- * The starter is Persian-first: `fa` is the reference dictionary and the
- * default demo. English remains a first-class fallback so an LTR client demo
- * needs no translation layer. Other locales fall back to English copy while
- * still receiving the correct text direction.
+ * Callers stop threading `site.meta.locale`: they ask the page language for the
+ * string, the digit, the date or the direction they need. Nested overrides are
+ * merged from the shape of the dictionary, so a new group needs no code here.
  */
+
+export interface PageLanguage extends LocaleFormatters {
+  /** Interface copy, with `{brand}` and friends interpolated. */
+  readonly t: UiStrings;
+  /** BCP 47 tag for `<html lang>` and form controls. */
+  readonly lang: string;
+  readonly direction: Direction;
+  /** Open Graph locale value: underscores, not hyphens. */
+  readonly ogLocale: string;
+}
 
 const fa: UiStrings = {
   skipToContent: "رفتن به محتوای اصلی",
@@ -119,78 +130,65 @@ const en: UiStrings = {
   },
 };
 
-const dictionaries: Record<"fa" | "en", UiStrings> = { fa, en };
+const dictionaries = { fa, en } as const;
 
-const rtlLanguages = new Set([
-  "ar",
-  "ckb",
-  "dv",
-  "fa",
-  "he",
-  "ku",
-  "ps",
-  "ur",
-  "yi",
-]);
-
-/** The interface dictionary for a locale, with English as the safe fallback. */
-export function languageOf(locale: string): "fa" | "en" {
+/** Persian is the reference locale; every other locale falls back to English. */
+function languageOf(locale: string): keyof typeof dictionaries {
   return locale.toLowerCase().startsWith("fa") ? "fa" : "en";
 }
 
-/** Infer direction from a BCP 47 locale when a config does not set it. */
-export function directionFor(locale: string): Direction {
+const rtlLanguages = new Set(["ar", "ckb", "dv", "fa", "he", "ku", "ps", "ur", "yi"]);
+
+function directionFor(locale: string): Direction {
   const language = locale.toLowerCase().split(/[-_]/)[0];
   return rtlLanguages.has(language) ? "rtl" : "ltr";
 }
 
-/** The direction actually used by the page. */
-export function resolveDirection(site: Pick<SiteConfig, "meta">): Direction {
-  return site.meta.direction ?? directionFor(site.meta.locale);
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Merge the locale dictionary with any per-client interface overrides. */
-export function resolveUi(site: Pick<SiteConfig, "meta" | "ui">): UiStrings {
-  const base = dictionaries[languageOf(site.meta.locale)];
-  const overrides = site.ui;
+/** Merge an override over a default, at any depth the dictionary happens to have. */
+function mergeValue(base: unknown, override: unknown): unknown {
+  if (!isPlainObject(base) || !isPlainObject(override)) return override;
 
-  if (!overrides) return base;
+  const merged: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(override)) {
+    if (value === undefined) continue;
+    merged[key] = key in merged ? mergeValue(merged[key], value) : value;
+  }
+  return merged;
+}
 
-  const { contactDetails, form, gallery, notFound, ...flat } = overrides;
-  const merged = { ...base, ...flat } as UiStrings;
+/** Replace `{token}` placeholders with the values the page actually has. */
+function interpolate<T>(value: T, tokens: Record<string, string>): T {
+  if (typeof value === "string") {
+    return value.replace(/\{(\w+)\}/g, (match, key: string) => tokens[key] ?? match) as unknown as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => interpolate(item, tokens)) as unknown as T;
+  }
+  if (isPlainObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, child]) => [key, interpolate(child, tokens)]),
+    ) as unknown as T;
+  }
+  return value;
+}
+
+/** Build the page language from the active config. */
+export function pageLanguage(
+  site: Pick<SiteConfig, "meta" | "ui" | "brand">,
+): PageLanguage {
+  const { locale } = site.meta;
+  const base = dictionaries[languageOf(locale)];
+  const copy = (site.ui ? mergeValue(base, site.ui) : base) as UiStrings;
 
   return {
-    ...merged,
-    contactDetails: { ...base.contactDetails, ...contactDetails },
-    form: { ...base.form, ...form },
-    gallery: { ...base.gallery, ...gallery },
-    notFound: { ...base.notFound, ...notFound },
+    t: interpolate(copy, { brand: site.brand.name }),
+    lang: locale,
+    direction: site.meta.direction ?? directionFor(locale),
+    ogLocale: locale.replace("-", "_"),
+    ...localeFormatters(locale),
   };
-}
-
-/** Locale-aware number formatting; Persian gets Persian digits. */
-export function formatNumber(
-  value: number,
-  locale: string,
-  options: Intl.NumberFormatOptions = {},
-): string {
-  return new Intl.NumberFormat(locale, options).format(value);
-}
-
-/** Zero-padded menu, list, and gallery indices. */
-export function formatIndex(value: number, locale: string): string {
-  return formatNumber(value, locale, {
-    minimumIntegerDigits: 2,
-    useGrouping: false,
-  });
-}
-
-/** Copyright year in the locale's calendar (Persian calendar for fa-IR). */
-export function formatYear(locale: string, date = new Date()): string {
-  return new Intl.DateTimeFormat(locale, { year: "numeric" }).format(date);
-}
-
-/** Open Graph uses underscores, not hyphens, in its locale values. */
-export function ogLocale(locale: string): string {
-  return locale.replace("-", "_");
 }

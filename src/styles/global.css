@@ -1,19 +1,5 @@
 @import "tailwindcss";
 
-@theme inline {
-  --color-canvas: var(--c-canvas);
-  --color-surface: var(--c-surface);
-  --color-ink: var(--c-ink);
-  --color-muted: var(--c-muted);
-  --color-accent: var(--c-accent);
-  --color-accent-ink: var(--c-accent-ink);
-  --color-line: var(--c-line);
-  --color-tint: var(--c-tint);
-  --color-on-image: var(--c-on-image);
-  --font-display: var(--type-display);
-  --font-body: var(--type-body);
-}
-
 :root {
   --nudge-x: 2px;
   --nudge-x-strong: 3px;
@@ -248,10 +234,12 @@
   text-transform: uppercase;
 }
 
-.rule {
-  border: 0;
-  border-top: 1px solid var(--c-line);
-  margin: 0;
+.section-note {
+  max-width: 46ch;
+  margin-top: 1.75rem;
+  color: var(--c-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
 }
 
 .icon {
@@ -663,27 +651,42 @@ body:has(.lightbox[open]) {
 .section-heading {
   display: grid;
   gap: 1.5rem;
+}
+
+.section-heading--split {
   margin-bottom: clamp(2.5rem, 5vw, 4.25rem);
 }
 
-.section-heading__title {
+.section-heading--split .section-heading__title {
   max-width: 15ch;
 }
 
-.section-heading__intro {
+.section-heading--split .section-heading__intro {
   max-width: 42ch;
   align-self: end;
 }
 
+.section-heading--aside .section-heading__intro {
+  max-width: 48ch;
+}
+
 @media (min-width: 768px) {
-  .section-heading {
+  .section-heading--split {
     grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
     align-items: end;
     column-gap: clamp(2rem, 6vw, 6rem);
   }
 
-  .section-heading__intro {
+  .section-heading--split .section-heading__intro {
     padding-bottom: 0.3rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .section-heading--sticky {
+    position: sticky;
+    top: 7rem;
+    align-self: start;
   }
 }
 
@@ -728,10 +731,6 @@ body:has(.lightbox[open]) {
   background: var(--c-accent);
   content: "";
   flex: none;
-}
-
-.media--arch .media__frame {
-  border-radius: 999px 999px var(--shape-media) var(--shape-media);
 }
 
 .media__fallback {
@@ -808,8 +807,8 @@ body:has(.lightbox[open]) {
   aspect-ratio: 4 / 5;
 }
 
-.hero__image.media--arch .media__frame {
-  border-radius: 999px 999px var(--shape-media) var(--shape-media);
+.hero--split .hero__image .media__frame {
+  border-radius: var(--shape-media-hero);
 }
 
 .hero__media .media {
@@ -1240,16 +1239,6 @@ body:has(.lightbox[open]) {
 /* Services                                                            */
 /* ------------------------------------------------------------------ */
 
-.services__head {
-  display: grid;
-  gap: 1.5rem;
-  margin-bottom: clamp(2.5rem, 5vw, 4rem);
-}
-
-.services__intro {
-  align-self: end;
-}
-
 .services__grid {
   display: grid;
   gap: 0;
@@ -1313,21 +1302,7 @@ body:has(.lightbox[open]) {
   text-transform: uppercase;
 }
 
-.services__note {
-  max-width: 44ch;
-  margin-top: 1.75rem;
-  color: var(--c-muted);
-  font-size: 0.82rem;
-  line-height: 1.6;
-}
-
 @media (min-width: 768px) {
-  .services__head {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-    align-items: end;
-    column-gap: 3rem;
-  }
-
   .services__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1375,10 +1350,6 @@ body:has(.lightbox[open]) {
 .features__layout {
   display: grid;
   gap: 2rem;
-}
-
-.features__head .lede {
-  margin-top: 1.4rem;
 }
 
 .features__list {
@@ -1437,25 +1408,11 @@ body:has(.lightbox[open]) {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     column-gap: clamp(2rem, 6vw, 6.5rem);
   }
-
-  .features__head {
-    position: sticky;
-    top: 7rem;
-    align-self: start;
-  }
 }
 
 /* ------------------------------------------------------------------ */
 /* Gallery                                                             */
 /* ------------------------------------------------------------------ */
-
-.gallery__head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 2rem;
-  margin-bottom: clamp(2.5rem, 5vw, 4rem);
-}
 
 .gallery__columns {
   columns: 1;
@@ -1531,13 +1488,6 @@ body:has(.lightbox[open]) {
   background: var(--c-accent);
   border-color: var(--c-accent);
   color: var(--c-accent-ink);
-}
-
-.gallery__note {
-  max-width: 44ch;
-  margin-top: 2rem;
-  color: var(--c-muted);
-  font-size: 0.78rem;
 }
 
 @media (min-width: 560px) {
@@ -1762,14 +1712,6 @@ body:has(.lightbox[open]) {
   margin-top: 0.25rem;
 }
 
-.pricing__note {
-  max-width: 48ch;
-  margin-top: 1.75rem;
-  color: var(--c-muted);
-  font-size: 0.78rem;
-  line-height: 1.6;
-}
-
 .pricing__cta {
   display: flex;
   flex-wrap: wrap;
@@ -1868,13 +1810,6 @@ body:has(.lightbox[open]) {
   padding-top: 2rem;
 }
 
-.testimonials__note {
-  max-width: 44ch;
-  margin-top: 2rem;
-  color: var(--c-muted);
-  font-size: 0.72rem;
-}
-
 @media (min-width: 820px) {
   .testimonial-grid {
     grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
@@ -1896,10 +1831,6 @@ body:has(.lightbox[open]) {
 .faq__layout {
   display: grid;
   gap: 2rem;
-}
-
-.faq__head .lede {
-  margin-top: 1.25rem;
 }
 
 .faq__list {
@@ -1963,30 +1894,15 @@ body:has(.lightbox[open]) {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     column-gap: clamp(2rem, 6vw, 6.5rem);
   }
-
-  .faq__head {
-    position: sticky;
-    top: 7rem;
-    align-self: start;
-  }
 }
 
 /* ------------------------------------------------------------------ */
 /* Contact                                                             */
 /* ------------------------------------------------------------------ */
 
-.contact {
-  background: var(--c-surface);
-}
-
 .contact__layout {
   display: grid;
   gap: clamp(2.5rem, 6vw, 5rem);
-}
-
-.contact__intro > .lede {
-  max-width: 42ch;
-  margin-top: 1.25rem;
 }
 
 .contact__details {
@@ -2536,9 +2452,9 @@ body:has(.lightbox[open]) {
   line-height: 1.7;
 }
 
-:lang(fa) .testimonials__note {
-  font-size: 0.78rem;
-  line-height: 1.7;
+:lang(fa) .section-note {
+  font-size: 0.8rem;
+  line-height: 1.8;
 }
 
 :lang(fa) .testimonial__name {
@@ -2569,15 +2485,19 @@ body:has(.lightbox[open]) {
   max-width: 42ch;
 }
 
-:lang(fa) .section-heading__intro {
+:lang(fa) .section-heading--split .section-heading__intro {
   max-width: 46ch;
+}
+
+:lang(fa) .section-heading--aside .section-heading__intro {
+  max-width: 50ch;
 }
 
 :lang(fa) .hero__title {
   max-width: 15ch;
 }
 
-:lang(fa) .section-heading__title {
+:lang(fa) .section-heading--split .section-heading__title {
   max-width: 18ch;
 }
 

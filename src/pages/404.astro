@@ -3,11 +3,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { site } from "../config/site";
 import Button from "../components/ui/Button.astro";
 import Eyebrow from "../components/ui/Eyebrow.astro";
-import { formatNumber, resolveUi } from "../lib/i18n";
+import { pageLanguage } from "../lib/language";
 import { base } from "../lib/url";
 
-const ui = resolveUi(site);
-const backLabel = ui.notFound.back.replace("{brand}", site.brand.name);
+const language = pageLanguage(site);
+const ui = language.t;
+const backLabel = ui.notFound.back;
 ---
 
 <BaseLayout
@@ -19,7 +20,7 @@ const backLabel = ui.notFound.back.replace("{brand}", site.brand.name);
     <div class="shell not-found">
       <Eyebrow text={ui.notFound.eyebrow} />
       <p class="not-found__code" aria-hidden="true">
-        {formatNumber(404, site.meta.locale, { useGrouping: false })}
+        {language.number(404, { useGrouping: false })}
       </p>
       <div class="not-found__body">
         <h1 id="not-found-title" class="display display--md">

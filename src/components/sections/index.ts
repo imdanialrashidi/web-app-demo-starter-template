@@ -8,7 +8,12 @@ import Services from "./Services.astro";
 import Statement from "./Statement.astro";
 import Story from "./Story.astro";
 import Testimonials from "./Testimonials.astro";
+import type { SectionId } from "../../config/types";
 
+/**
+ * Every supported section id mapped to the module that renders it.
+ * `satisfies` makes a missing or orphaned entry a type error.
+ */
 export const sectionComponents = {
   hero: Hero,
   statement: Statement,
@@ -20,4 +25,4 @@ export const sectionComponents = {
   testimonials: Testimonials,
   faq: Faq,
   contact: Contact,
-} as const;
+} satisfies Record<SectionId, unknown>;

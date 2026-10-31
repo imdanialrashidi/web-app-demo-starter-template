@@ -23,8 +23,11 @@ This file and [README.md](README.md) own current repository facts and commands.
 | Client content, section mix, navigation | `src/config/clients/*.ts` |
 | Active client selection | `src/config/site.ts` |
 | Typed content contract | `src/config/types.ts` |
+| Page composition, anchors, navigation | `src/lib/sections.ts` |
 | Design tokens and font CSS | `src/lib/theme.ts`, `src/lib/fonts.ts` |
-| Locale, direction, interface copy, formatting | `src/lib/i18n.ts` |
+| Locale, direction, interface copy, formatting | `src/lib/language.ts`, `src/lib/format.ts` |
+| Image roles and derived sizes | `src/lib/images.ts` |
+| Client interaction modules | `src/lib/client/` |
 | Shared visual system | `src/styles/global.css` |
 | Reusable UI and sections | `src/components/ui/`, `src/components/sections/` |
 | Deployment base/site derivation | `astro.config.mjs` |
@@ -57,12 +60,16 @@ competing instruction document for build, deployment, or design rules.
   components or append client CSS to `global.css`.
 - **Locale and direction are config.** `meta.locale` drives `<html lang>`,
   interface copy, and Intl formatting; `meta.direction` defaults from the locale.
-  Fixed interface labels belong in `src/lib/i18n.ts`, not in components. Persian
+  Fixed interface labels belong in `src/lib/language.ts`, not in components. Persian
   is the reference locale; keep it working when changing shared layout.
 - **Sections are assembled by id.** `site.sections` controls order and presence;
-  `src/components/sections/index.ts` is the registry. A section without data
-  renders nothing. Keep `navigation` aligned with rendered sections.
-- **Reuse before adding.** Use `Button`, `Media`, `Section`, `SectionHeading`,
+  `src/lib/sections.ts` derives each slot's anchor, heading id and navigation
+  entry, and `src/components/sections/index.ts` is the registry. A listed
+  section without content is dropped, and a fragment link with no rendered
+  target fails the build. Navigation is labels keyed by section, not anchors.
+- **Sections receive their slot.** A section module takes `{ site, section }` and
+  uses `section.id` and `section.headingId`; it does not hardcode its DOM ids.
+- **Reuse before adding.** Use `Button`, `Figure`, `Section`, `SectionHeading`,
   `Eyebrow`, `Logo`, and the existing design classes. Add a new section only when
   an existing section cannot express the required content; register it and add
   its type.
@@ -80,12 +87,14 @@ section procedure.
 
 1. Copy the repository into a client-specific workspace or repository. Do not
    overwrite the canonical examples with client-specific content.
-2. Copy an example in `src/config/clients/`, change `key`, and register it in
-   `src/config/site.ts`.
+2. Copy an example in `src/config/clients/` and register it in
+   `src/config/site.ts`; its registry key is the value `CLIENT` selects.
 3. Set `meta.locale`, `meta.direction` when the default is not right, `sections`,
-   `navigation`, and `headerAction`. Remove sections the client does not need;
-   keep anchors valid. Override interface wording through `ui` only when the
-   locale default is wrong for the client.
+   `navigation` (labels keyed by section), and `headerAction`. Remove sections
+   the client does not need; anchors and nav entries follow `sections`
+   automatically, and a fragment link without a rendered target fails the build.
+   Override interface wording through `ui` only when the locale default is wrong
+   for the client.
 4. Write approved copy in the client's language, including punctuation,
    numerals, and dates. If facts, prices, people, addresses, policies, or reviews
    are not approved, keep clearly fictional demo content and the demo note.
@@ -133,11 +142,14 @@ client; add a new config so the examples remain useful reference material.
 
 - Store licensed images locally in `src/assets/images/` and import them in the
   client config. Do not use remote image URLs at runtime.
-- Use the `Media` component or Astro `<Image>` with `widths` and `sizes`. Hero
-  images may be eager/high priority; everything below the fold must stay lazy.
+- Use `Figure` with a role (`hero`, `banner`, `scene`, `figure`, `thumb`) — or
+  Astro `<Image>` plus a preset from `src/lib/images.ts` where the composition
+  needs its own markup. Presets own widths, sizes, quality and priority; hero
+  images may be eager/high priority, everything below the fold stays lazy.
   Preserve intrinsic dimensions/aspect ratio.
 - Always write meaningful alt text. If an image is unknown or absent, use the
-  designed fallback rather than a broken source.
+  designed fallback (`Figure` renders it; `ImageFallback` is the shared markup)
+  rather than a broken source.
 - Fonts are local WOFF2 files registered in `src/lib/fonts.ts`. Include the
   licence in `src/assets/fonts/licenses/` and update `CREDITS.md`. Estedad covers
   Persian/Arabic and Latin; the other faces are Latin-only. Add a subset when the
@@ -153,9 +165,10 @@ client; add a new config so the examples remain useful reference material.
 - Output must stay static (`output: "static"`). No server runtime or rewrites.
 - `astro.config.mjs` derives `site` and `base` from `SITE_URL` / `BASE_PATH`, a
   `public/CNAME` custom domain, or `GITHUB_REPOSITORY`. Keep that precedence.
-- All root-relative public assets must go through `withBase()` or Astro-managed
-  imports. Section links are plain fragments (`#contact`). Never hardcode
-  `/repository-name/`.
+- All links and root-relative public assets must go through `href()` (or
+  `pagePath()` for paths that may already carry the base) in `src/lib/url.ts`.
+  Config links stay plain fragments (`#contact`); the module resolves them
+  through the base. Never hardcode `/repository-name/`.
 - The Pages workflow must remain pinned to full commit SHAs, use least-privilege
   permissions, install from the lockfile, and run `npm run verify`.
 - Test a project-page subpath before claiming deployment compatibility:

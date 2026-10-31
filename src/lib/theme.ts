@@ -2,65 +2,66 @@ import type { FontFaceKey, Theme } from "../config/types";
 import { fontFaces } from "./fonts";
 
 /**
- * Generates the selected theme's tokens and only the font faces it needs.
- * Config values are trusted source values, not user-generated HTML.
+ * The theme module: one config block in, everything the layout needs out.
+ *
+ * Custom-property names are derived from the token names, so adding a colour is
+ * a config change and nothing else. The face set is computed once and serves
+ * both the `@font-face` rules and the preload list.
  */
-export function themeCss(theme: Theme): string {
+
+export interface ThemeOutput {
+  /** `@font-face` rules and the theme's custom properties. */
+  css: string;
+  /** Font files the page should preload, in face order. */
+  preloads: string[];
+}
+
+/** `accentInk` → `accent-ink`, `footerBg` → `footer-bg`. */
+function kebabCase(name: string): string {
+  return name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+
+function fontRule(face: (typeof fontFaces)[FontFaceKey]): string {
+  return `@font-face{font-family:"${face.family}";src:url("${face.src}") format("woff2");font-style:${face.style};font-weight:${face.weight};font-display:swap}`;
+}
+
+export function themeFor(theme: Theme): ThemeOutput {
   const faces = [
     ...new Set<FontFaceKey>([
       theme.fonts.display,
       theme.fonts.body,
       theme.fonts.emphasis,
     ]),
-  ];
-
-  const fontRules = faces
-    .map((key) => {
-      const face = fontFaces[key];
-      return `@font-face{font-family:"${face.family}";src:url("${face.src}") format("woff2");font-style:${face.style};font-weight:${face.weight};font-display:swap}`;
-    })
-    .join("\n");
+  ].map((key) => fontFaces[key]);
 
   const display = fontFaces[theme.fonts.display];
   const body = fontFaces[theme.fonts.body];
   const emphasis = fontFaces[theme.fonts.emphasis];
 
-  return `${fontRules}
+  const colors = Object.entries(theme.colors).map(
+    ([name, value]) => `  --c-${kebabCase(name)}:${value};`,
+  );
+
+  const heroRadius = theme.shape.heroArch
+    ? `999px 999px ${theme.shape.media} ${theme.shape.media}`
+    : theme.shape.media;
+
+  const css = `${faces.map(fontRule).join("\n")}
 :root{
   color-scheme:${theme.mode};
-  --c-canvas:${theme.colors.canvas};
-  --c-surface:${theme.colors.surface};
-  --c-ink:${theme.colors.ink};
-  --c-muted:${theme.colors.muted};
-  --c-accent:${theme.colors.accent};
-  --c-accent-ink:${theme.colors.accentInk};
-  --c-line:${theme.colors.line};
-  --c-tint:${theme.colors.tint};
-  --c-on-image:${theme.colors.onImage};
-  --c-footer-bg:${theme.colors.footerBg};
-  --c-footer-ink:${theme.colors.footerInk};
+${colors.join("\n")}
   --type-display:${display.stack};
   --type-body:${body.stack};
   --type-emphasis:${emphasis.stack};
   --emphasis-style:${emphasis.style === "italic" ? "italic" : "normal"};
   --emphasis-weight:${emphasis.style === "italic" ? "inherit" : "500"};
   --shape-media:${theme.shape.media};
+  --shape-media-hero:${heroRadius};
   --shape-button:${theme.shape.button};
   --content-width:${theme.layout.contentWidth};
   --gutter:${theme.layout.gutter};
   --section-space:${theme.layout.sectionSpace};
 }`;
-}
 
-/** The fonts that should be preloaded for the selected theme. */
-export function themeFontFaces(theme: Theme) {
-  const keys = [
-    ...new Set<FontFaceKey>([
-      theme.fonts.display,
-      theme.fonts.body,
-      theme.fonts.emphasis,
-    ]),
-  ];
-  return keys.map((key) => fontFaces[key]);
+  return { css, preloads: faces.map((face) => face.src) };
 }
-

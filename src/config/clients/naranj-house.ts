@@ -17,7 +17,6 @@ import terrace from "../../assets/images/terrace.jpg";
  * All business details, rates, and guest notes are demo content.
  */
 export const naranjHouse = {
-  key: "naranj-house",
   brand: {
     name: "خانهٔ نارنج",
     mark: "sun",
@@ -75,11 +74,11 @@ export const naranjHouse = {
     },
   },
   navigation: [
-    { label: "خانه", href: "#story" },
-    { label: "در خانه", href: "#services" },
-    { label: "دور و بر", href: "#features" },
-    { label: "گالری", href: "#gallery" },
-    { label: "اتاق‌ها", href: "#pricing" },
+    { label: "خانه", section: "story" },
+    { label: "در خانه", section: "services" },
+    { label: "دور و بر", section: "features" },
+    { label: "گالری", section: "gallery" },
+    { label: "اتاق‌ها", section: "pricing" },
   ],
   headerAction: {
     label: "بررسی تاریخ‌ها",

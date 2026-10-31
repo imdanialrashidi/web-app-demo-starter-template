@@ -2,44 +2,42 @@
 import type { SiteConfig } from "../../config/types";
 import Button from "../ui/Button.astro";
 import HeadlineText from "../ui/Headline.astro";
-import Media from "../ui/Media.astro";
-import { resolveUi } from "../../lib/i18n";
+import Figure from "../ui/Figure.astro";
+import { pageLanguage } from "../../lib/language";
+import type { SectionSlot } from "../../lib/sections";
 
 interface Props {
   site: SiteConfig;
+  section: SectionSlot;
 }
 
-const { site } = Astro.props;
-const { hero, brand, theme } = site;
-const ui = resolveUi(site);
+const { site, section } = Astro.props;
+const { hero, brand } = site;
+const ui = pageLanguage(site).t;
 const isImmersive = hero.variant === "immersive";
 ---
 
 <section
-  id="top"
+  id={section.id}
   class:list={["hero", isImmersive ? "hero--immersive" : "hero--split"]}
-  aria-labelledby="hero-title"
+  aria-labelledby={section.headingId}
 >
   {
     isImmersive ? (
       <>
         <div class="hero__media">
-          <Media
+          <Figure
+            role="banner"
             image={hero.image.src}
             alt={hero.image.alt}
             position={hero.image.position}
             class="hero__image"
-            ratio="16 / 9"
-            sizes="100vw"
-            widths={[640, 960, 1280, 1600, 2000]}
-            priority
-            quality={84}
             unavailableLabel={ui.imageUnavailable}
           />
         </div>
         <div class="shell hero__immersive-inner">
           <p class="eyebrow hero__eyebrow">{hero.eyebrow}</p>
-          <h1 id="hero-title" class="display display--xl hero__title">
+          <h1 id={section.headingId} class="display display--xl hero__title">
             <HeadlineText headline={hero.headline} />
           </h1>
           <p class="hero__intro">{hero.intro}</p>
@@ -62,7 +60,7 @@ const isImmersive = hero.variant === "immersive";
       <div class="shell hero__grid">
         <div class="hero__headline">
           <p class="eyebrow hero__eyebrow">{hero.eyebrow}</p>
-          <h1 id="hero-title" class="display display--xl hero__title">
+          <h1 id={section.headingId} class="display display--xl hero__title">
             <HeadlineText headline={hero.headline} />
           </h1>
         </div>
@@ -85,17 +83,12 @@ const isImmersive = hero.variant === "immersive";
         </div>
 
         <div class="hero__media">
-          <Media
+          <Figure
+            role="hero"
             image={hero.image.src}
             alt={hero.image.alt}
             position={hero.image.position}
             class="hero__image"
-            ratio="4 / 5"
-            sizes="(min-width: 900px) 41vw, 100vw"
-            widths={[480, 720, 960, 1280, 1600]}
-            arch={theme.shape.heroArch}
-            priority
-            quality={84}
             unavailableLabel={ui.imageUnavailable}
           />
           <div class="hero__media-meta">

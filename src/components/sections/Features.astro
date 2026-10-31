@@ -1,30 +1,33 @@
 ---
 import type { SiteConfig } from "../../config/types";
-import Eyebrow from "../ui/Eyebrow.astro";
-import HeadlineText from "../ui/Headline.astro";
 import Icon from "../ui/Icon.astro";
 import Section from "../ui/Section.astro";
-import { formatIndex } from "../../lib/i18n";
+import SectionHeading from "../ui/SectionHeading.astro";
+import { pageLanguage } from "../../lib/language";
+import type { SectionSlot } from "../../lib/sections";
 
 interface Props {
   site: SiteConfig;
+  section: SectionSlot;
 }
 
-const { site } = Astro.props;
+const { site, section } = Astro.props;
 const features = site.features;
+const language = pageLanguage(site);
 ---
 
 {
   features && (
-    <Section id="features" labelledby="features-title">
+    <Section id={section.id} labelledby={section.headingId}>
       <div class="features__layout">
-        <div class="features__head">
-          <Eyebrow text={features.eyebrow} />
-          <h2 id="features-title" class="display display--lg">
-            <HeadlineText headline={features.headline} />
-          </h2>
-          {features.intro && <p class="lede">{features.intro}</p>}
-        </div>
+        <SectionHeading
+          eyebrow={features.eyebrow}
+          headline={features.headline}
+          intro={features.intro}
+          id={section.headingId}
+          layout="aside"
+          sticky
+        />
 
         <div class="features__list">
           {features.items.map((feature, index) => (
@@ -34,7 +37,7 @@ const features = site.features;
                   <Icon name={feature.icon} size={19} />
                 ) : (
                   <span class="feature__index">
-                    {formatIndex(index + 1, site.meta.locale)}
+                    {language.index(index + 1)}
                   </span>
                 )}
               </span>

@@ -1,30 +1,35 @@
 ---
 import type { SiteConfig } from "../../config/types";
-import Eyebrow from "../ui/Eyebrow.astro";
-import HeadlineText from "../ui/Headline.astro";
+import Button from "../ui/Button.astro";
 import Icon from "../ui/Icon.astro";
 import Section from "../ui/Section.astro";
-import { resolveUi } from "../../lib/i18n";
+import SectionHeading from "../ui/SectionHeading.astro";
+import { pageLanguage } from "../../lib/language";
+import type { SectionSlot } from "../../lib/sections";
 
 interface Props {
   site: SiteConfig;
+  section: SectionSlot;
 }
 
-const { site } = Astro.props;
+const { site, section } = Astro.props;
 const contact = site.contact;
-const ui = resolveUi(site);
+const language = pageLanguage(site);
+const ui = language.t;
 ---
 
 {
   contact && (
-    <Section id="contact" labelledby="contact-title" tone="surface" class="contact">
+    <Section id={section.id} labelledby={section.headingId} tone="surface" class="contact">
       <div class="contact__layout">
         <div class="contact__intro">
-          <Eyebrow text={contact.eyebrow} />
-          <h2 id="contact-title" class="display display--lg">
-            <HeadlineText headline={contact.headline} />
-          </h2>
-          <p class="lede">{contact.intro}</p>
+          <SectionHeading
+            eyebrow={contact.eyebrow}
+            headline={contact.headline}
+            intro={contact.intro}
+            id={section.headingId}
+            layout="aside"
+          />
 
           <div class="contact__details">
             <div class="contact-item">
@@ -132,7 +137,7 @@ const ui = resolveUi(site);
                       id="contact-arrival"
                       name="arrival"
                       type="date"
-                      lang={site.meta.locale}
+                      lang={language.lang}
                     />
                   </div>
                   <div class="field">
@@ -142,7 +147,7 @@ const ui = resolveUi(site);
                       id="contact-departure"
                       name="departure"
                       type="date"
-                      lang={site.meta.locale}
+                      lang={language.lang}
                     />
                   </div>
                   <div class="field field--full">
@@ -191,10 +196,7 @@ const ui = resolveUi(site);
             </div>
 
             <div class="form-actions">
-              <button class="btn btn--accent" type="submit">
-                <span>{contact.form.submitLabel}</span>
-                <Icon name="arrow-up-right" size={15} class="btn__icon" />
-              </button>
+              <Button label={contact.form.submitLabel} type="submit" variant="accent" />
               <span class="form-hint">{ui.form.submitHint}</span>
             </div>
 
@@ -207,29 +209,7 @@ const ui = resolveUi(site);
 }
 
 <script>
-  document.querySelectorAll<HTMLFormElement>("[data-demo-form]").forEach((form) => {
-    const status = form.querySelector<HTMLElement>("[data-form-status]");
+  import { initDemoForm } from "../../lib/client/demo-form";
 
-    form.addEventListener("input", () => {
-      if (!status) return;
-      status.textContent = "";
-      status.classList.remove("form-status--success");
-    });
-
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-
-      if (!form.reportValidity()) return;
-
-      if (status) {
-        status.textContent =
-          form.dataset.success ||
-          form.dataset.successFallback ||
-          "This demo form does not send data.";
-        status.classList.add("form-status--success");
-      }
-
-      form.reset();
-    });
-  });
+  initDemoForm();
 </script>

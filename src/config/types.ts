@@ -1,16 +1,23 @@
 import type { ImageMetadata } from "astro";
 
-export type SectionId =
-  | "hero"
-  | "statement"
-  | "story"
-  | "services"
-  | "features"
-  | "gallery"
-  | "pricing"
-  | "testimonials"
-  | "faq"
-  | "contact";
+/**
+ * The sections a page can be assembled from. This array is the single source
+ * of truth: the union, the registry and the config all derive from it.
+ */
+export const sectionIds = [
+  "hero",
+  "statement",
+  "story",
+  "services",
+  "features",
+  "gallery",
+  "pricing",
+  "testimonials",
+  "faq",
+  "contact",
+] as const;
+
+export type SectionId = (typeof sectionIds)[number];
 
 /** Page direction. Persian, Arabic, Hebrew, and Urdu demos use `rtl`. */
 export type Direction = "rtl" | "ltr";
@@ -119,15 +126,17 @@ export interface UiStrings {
   };
 }
 
-/** Nested overrides for the locale's default interface strings. */
-export type UiOverrides = Partial<
-  Omit<UiStrings, "contactDetails" | "form" | "gallery" | "notFound">
-> & {
-  contactDetails?: Partial<UiStrings["contactDetails"]>;
-  form?: Partial<UiStrings["form"]>;
-  gallery?: Partial<UiStrings["gallery"]>;
-  notFound?: Partial<UiStrings["notFound"]>;
+/** Every nested object can be overridden field by field; arrays are replaced whole. */
+export type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends readonly unknown[]
+    ? T[K]
+    : T[K] extends object
+      ? DeepPartial<T[K]>
+      : T[K];
 };
+
+/** Overrides for the locale's default interface strings. */
+export type UiOverrides = DeepPartial<UiStrings>;
 
 export interface Theme {
   mode: "light" | "dark";
@@ -294,8 +303,6 @@ export interface FooterContent {
 }
 
 export interface SiteConfig {
-  /** Stable slug used by the CLIENT build switch. */
-  key: string;
   brand: {
     name: string;
     mark: "tide" | "frame" | "sun";
@@ -318,7 +325,11 @@ export interface SiteConfig {
     note: string;
   };
   theme: Theme;
-  navigation: Array<{ label: string; href: string }>;
+  /**
+   * Navigation labels keyed by section. The anchor is derived, so a nav item
+   * can never point at a section that does not render.
+   */
+  navigation: Array<{ label: string; section: SectionId }>;
   headerAction?: Action;
   hero: HeroContent;
   statement?: StatementContent;

@@ -12,7 +12,6 @@ import terrace from "../../assets/images/terrace.jpg";
  * and form variant without duplicating any shared component.
  */
 export const atelierSora = {
-  key: "atelier-sora",
   brand: {
     name: "Atelier Sora",
     mark: "frame",
@@ -63,10 +62,10 @@ export const atelierSora = {
     },
   },
   navigation: [
-    { label: "Studio", href: "#story" },
-    { label: "Services", href: "#services" },
-    { label: "Approach", href: "#features" },
-    { label: "Work", href: "#gallery" },
+    { label: "Studio", section: "story" },
+    { label: "Services", section: "services" },
+    { label: "Approach", section: "features" },
+    { label: "Work", section: "gallery" },
   ],
   headerAction: {
     label: "Start a project",

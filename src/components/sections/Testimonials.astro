@@ -2,23 +2,25 @@
 import type { SiteConfig } from "../../config/types";
 import Section from "../ui/Section.astro";
 import SectionHeading from "../ui/SectionHeading.astro";
+import type { SectionSlot } from "../../lib/sections";
 
 interface Props {
   site: SiteConfig;
+  section: SectionSlot;
 }
 
-const { site } = Astro.props;
+const { site, section } = Astro.props;
 const testimonials = site.testimonials;
 const [lead, ...others] = testimonials?.items ?? [];
 ---
 
 {
   testimonials && lead && (
-    <Section id="testimonials" labelledby="testimonials-title" tone="tint">
+    <Section id={section.id} labelledby={section.headingId} tone="tint">
       <SectionHeading
         eyebrow={testimonials.eyebrow}
         headline={testimonials.headline}
-        id="testimonials-title"
+        id={section.headingId}
       />
 
       <div class="testimonial-grid">
@@ -46,7 +48,7 @@ const [lead, ...others] = testimonials?.items ?? [];
       </div>
 
       {testimonials.note && (
-        <p class="testimonials__note">{testimonials.note}</p>
+        <p class="section-note">{testimonials.note}</p>
       )}
     </Section>
   )

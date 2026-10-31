@@ -1,35 +1,35 @@
 ---
 import type { SiteConfig } from "../../config/types";
 import Eyebrow from "../ui/Eyebrow.astro";
-import Media from "../ui/Media.astro";
-import { resolveUi } from "../../lib/i18n";
+import Figure from "../ui/Figure.astro";
+import { pageLanguage } from "../../lib/language";
+import type { SectionSlot } from "../../lib/sections";
 
 interface Props {
   site: SiteConfig;
+  section: SectionSlot;
 }
 
-const { site } = Astro.props;
+const { site, section } = Astro.props;
 const statement = site.statement;
-const ui = resolveUi(site);
+const ui = pageLanguage(site).t;
 const hasImage = Boolean(statement?.image?.src);
 ---
 
 {
   statement && (
     <section
+      id={section.id}
       class:list={["statement", hasImage && "statement--image"]}
       aria-label={statement.eyebrow}
     >
       {statement.image?.src && (
         <div class="statement__media">
-          <Media
+          <Figure
+            role="scene"
             image={statement.image.src}
             alt={statement.image.alt}
             position={statement.image.position}
-            ratio="16 / 9"
-            sizes="100vw"
-            widths={[480, 720, 960, 1440, 1920]}
-            quality={80}
             unavailableLabel={ui.imageUnavailable}
           />
         </div>

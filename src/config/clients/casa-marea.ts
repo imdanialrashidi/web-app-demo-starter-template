@@ -15,7 +15,6 @@ import terrace from "../../assets/images/terrace.jpg";
  * All business details, rates, and guest notes are demo content.
  */
 export const casaMarea = {
-  key: "casa-marea",
   brand: {
     name: "Casa Marea",
     mark: "tide",
@@ -66,11 +65,11 @@ export const casaMarea = {
     },
   },
   navigation: [
-    { label: "The house", href: "#story" },
-    { label: "At the house", href: "#services" },
-    { label: "The coast", href: "#features" },
-    { label: "Gallery", href: "#gallery" },
-    { label: "Rooms", href: "#pricing" },
+    { label: "The house", section: "story" },
+    { label: "At the house", section: "services" },
+    { label: "The coast", section: "features" },
+    { label: "Gallery", section: "gallery" },
+    { label: "Rooms", section: "pricing" },
   ],
   headerAction: {
     label: "Check dates",

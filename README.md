@@ -85,13 +85,17 @@ src/
       casa-marea.ts          English hospitality example
       atelier-sora.ts        English studio example
   lib/
-    i18n.ts                  locale dictionaries, direction, Intl formatting
+    sections.ts              page composition: section slots, anchors, navigation
+    language.ts              interface dictionaries, direction, page language
+    format.ts                locale-aware number and date formatting
+    images.ts                figure roles, full-size and social image derivation
     fonts.ts                 self-hosted font faces and font stacks
-    theme.ts                 theme tokens + @font-face generation
-    url.ts                   deployment-base-aware URL helpers
+    theme.ts                 themeFor(theme) -> CSS + font preloads
+    url.ts                   deployment-base-aware href helpers
+    client/                  menu, lightbox and demo-form modules
   styles/global.css          design system, layout, interactions, motion
   components/
-    ui/                      Button, Media, Section, SectionHeading, Logo, Icon
+    ui/                      Button, Figure, ImageFallback, Section, SectionHeading, Logo, Icon
     layout/                  Header (mobile <dialog>) and Footer
     sections/                reusable page sections + registry
   layouts/BaseLayout.astro   head, metadata, social image, page shell
@@ -111,12 +115,15 @@ starter into one client's site.
 1. **Read the brief.** Identify the primary action, required sections, visual
    direction, content facts, and any assets supplied by the client.
 2. **Copy an example config** in `src/config/clients/` and rename it, for example
-   `src/config/clients/north-house.ts`. Change `key`.
-3. **Register it** in `src/config/site.ts` under `clients`.
+   `src/config/clients/north-house.ts`.
+3. **Register it** in `src/config/site.ts` under `clients`; the registry key is
+   the value `CLIENT` selects.
 4. **Select and order sections** in the config's `sections` array. See the
-   section reference below. Update `navigation` so every link targets a rendered
-   section. Set `meta.locale` and, if needed, `meta.direction`; `rtl` is inferred
-   for Persian, Arabic, Hebrew, and Urdu locales.
+   section reference below. Write `navigation` as labels keyed by section
+   (`{ label, section }`); anchors are derived, so a nav item cannot point at a
+   section that does not render. Set `meta.locale` and, if needed,
+   `meta.direction`; `rtl` is inferred for Persian, Arabic, Hebrew, and Urdu
+   locales.
 5. **Write the content** in the config. Keep names, offers, prices, policies, and
    testimonials in one place. If the client supplied no real facts, keep the
    demo wording and the demo disclosure.
@@ -138,8 +145,10 @@ note unless a real form endpoint is implemented and tested.
 
 ## Sections
 
-Sections are selected by `sections: SectionId[]`. The supported ids and their
-configuration keys are:
+Sections are selected by `sections: SectionId[]`. The ids are declared once in
+`src/config/types.ts`; `src/lib/sections.ts` maps each one to its content key and
+derives the DOM id, the anchor, the heading id and the navigation entry. The
+supported ids and their configuration keys are:
 
 | Section | Config key | Notes |
 | --- | --- | --- |
@@ -154,18 +163,22 @@ configuration keys are:
 | `faq` | `faq` | Native accessible `<details>` |
 | `contact` | `contact` | Contact details + simulated booking/inquiry form |
 
-To remove a section, remove its id from `sections`, remove the matching
-navigation item if present, and leave or delete its data. To reorder, reorder the
-ids. A section without matching data renders nothing; navigation links are not
-automatically rewritten, so keep them aligned.
+To remove a section, remove its id from `sections` and leave or delete its data.
+Its navigation entry disappears with it. To reorder, reorder the ids. A listed
+section with no content is dropped rather than rendered empty, and any fragment
+link that no longer has a target fails the build with the dead links listed.
 
 To add a section:
 
-1. Add its id to `SectionId` and its optional data type to `SiteConfig` in
+1. Add its id to `sectionIds` and its optional content type to `SiteConfig` in
    `src/config/types.ts`.
-2. Create `src/components/sections/MySection.astro` that accepts `{ site }`.
-3. Register it in `src/components/sections/index.ts`.
-4. Add the data and id to the active client config and update `navigation`.
+2. Add its content key to `sectionContentKeys` in `src/lib/sections.ts`.
+3. Create `src/components/sections/MySection.astro` that accepts
+   `{ site, section }` and uses `section.id` / `section.headingId` for its ids.
+4. Register it in `src/components/sections/index.ts`; the `satisfies` check
+   fails until the registry is complete.
+5. Add the content and the id to the active client config, plus a
+   `{ label, section }` navigation entry.
 
 Use existing UI primitives and tokens first. New sections should stay
 client-agnostic and receive all copy through `site`.
@@ -180,9 +193,11 @@ All client-specific visual choices live in `theme`:
 - `shape`: media/button radii and the arched hero option
 - `layout`: content width, gutters, and section spacing
 
-`src/lib/theme.ts` turns the config into CSS variables and generates only the
-`@font-face` rules and preloads the active theme uses. `global.css` maps those
-variables into Tailwind's theme and the shared design system.
+`src/lib/theme.ts` exposes `themeFor(theme)`, which returns the CSS and the font
+preloads in one call. Custom-property names are derived from the token names
+(`accentInk` becomes `--c-accent-ink`), and one traversal feeds both the
+`@font-face` rules and the preload list. `global.css` consumes those custom
+properties directly (`var(--c-accent)`).
 
 ### Language, direction, and interface strings
 
@@ -192,13 +207,14 @@ variables into Tailwind's theme and the shared design system.
 - `meta.direction` is optional. It defaults from the locale (`fa`, `ar`, `he`,
   `ur`, and similar languages become `rtl`); set it explicitly when the content
   language and the intended flow differ.
-- `src/lib/i18n.ts` owns the Persian and English interface dictionaries, the
-  direction fallback, and `formatIndex`, `formatNumber`, `formatYear`, and
-  `ogLocale`. Components call `resolveUi(site)`; they never hardcode menu,
-  gallery, form, or footer labels.
-- Override a label for one client with the optional `ui` object. Nested form,
-  gallery, contact-detail, and not-found overrides are merged with the locale
-  defaults:
+- `src/lib/language.ts` exposes `pageLanguage(site)`: the interface copy (`t`),
+  the language tag, the direction, the Open Graph locale, and locale-aware
+  `number`, `index` and `year` formatting. Modules call it once and read
+  `language.t`; they never hardcode labels or thread `meta.locale` themselves.
+- `src/lib/format.ts` owns the formatting rules and is shared with the browser
+  modules, so the lightbox counts in the same digits as the menu and footer.
+- Override a label for one client with the optional `ui` object. Overrides merge
+  with the locale defaults by shape at any depth, so a new group needs no code:
 
 ```ts
 ui: {
@@ -217,13 +233,15 @@ ui: {
   `<bdi dir="ltr">` in RTL prose. Inputs that accept Latin values use
   `dir="ltr"`. Native `type="date"` controls follow the browser's locale; add a
   Jalali picker only when a client needs one.
-- To add another language, add its dictionary in `src/lib/i18n.ts`, add it to
-  `languageOf`, and set the locale in the client config. Components do not need
+- To add another language, add its dictionary in `src/lib/language.ts`, add it
+  to `languageOf`, and set the locale in the client config. Modules do not need
   changes.
+- `{brand}` in an interface string is interpolated from `brand.name`; no page
+  needs to substitute it.
 
-A new colour token needs updates in the theme type, all example configs,
-`themeCss`, and the relevant CSS. Avoid ad-hoc colour overrides in individual
-components.
+A new colour token needs the theme type, each example config, and the CSS rule
+that uses `var(--c-<token>)`. The custom-property name is derived, so no module
+change is needed. Avoid ad-hoc colour overrides in individual components.
 
 ### Changing fonts
 
@@ -252,9 +270,12 @@ another script.
 ## Images
 
 Client images are imported from `src/assets/images/` and passed through the
-`Media` component, so Astro can generate responsive WebP output. The hero image
-is eager and high priority; all gallery and below-the-fold images are lazy. The
-gallery lightbox requests the larger image only when opened.
+`Figure` component with a role — `hero`, `banner`, `scene`, `figure` or `thumb` —
+so Astro can generate responsive WebP output. The role owns the ratio, widths,
+sizes, quality and loading priority; `src/lib/images.ts` holds the presets and
+also derives the lightbox's full-size URL and the 1200 × 630 social card. The
+hero image is eager and high priority; all gallery and below-the-fold images are
+lazy. The gallery lightbox requests the larger image only when opened.
 
 Guidelines:
 
@@ -264,11 +285,16 @@ Guidelines:
 - Use `position` to control crops where the focal point is off-centre.
 - Keep enough source resolution for the largest rendered size, but avoid
   unnecessary multi-megabyte originals.
-- If an image is omitted, `Media` renders a designed, accessible fallback.
+- If an image is omitted, `Figure` renders a designed, accessible fallback whose
+  label comes from the page language.
 - Update `CREDITS.md` with the source and licence for every new file.
 
 ## Interaction and accessibility
 
+- The mobile menu, lightbox and demo form are modules in `src/lib/client/`.
+  Templates declare data attributes and call one `init`; the lightbox receives
+  its direction and locale from the server and shares the page's index
+  formatter.
 - The mobile menu is a native `<dialog>`: focus-trapped, Escape-closable, and
   restores focus.
 - FAQ items use native `<details>`; no JavaScript is required.

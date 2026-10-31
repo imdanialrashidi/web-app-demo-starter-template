@@ -1,9 +1,16 @@
 ---
-import type { Action } from "../../config/types";
+import type { Action, IconName } from "../../config/types";
 import Icon from "./Icon.astro";
 
-interface Props extends Action {
-  icon?: "arrow-up-right" | "arrow-right" | "none";
+/**
+ * A link when it has somewhere to go, a submit/button otherwise. Config
+ * actions (`Action`) carry an href; a form CTA passes `type="submit"`.
+ */
+interface Props {
+  label: string;
+  href?: string;
+  variant?: Action["variant"];
+  icon?: IconName | "none";
   class?: string;
   type?: "button" | "submit";
 }

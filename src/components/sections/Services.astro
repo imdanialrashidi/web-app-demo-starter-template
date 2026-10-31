@@ -3,25 +3,27 @@ import type { SiteConfig } from "../../config/types";
 import Icon from "../ui/Icon.astro";
 import Section from "../ui/Section.astro";
 import SectionHeading from "../ui/SectionHeading.astro";
-import { formatIndex } from "../../lib/i18n";
+import { pageLanguage } from "../../lib/language";
+import type { SectionSlot } from "../../lib/sections";
 
 interface Props {
   site: SiteConfig;
+  section: SectionSlot;
 }
 
-const { site } = Astro.props;
+const { site, section } = Astro.props;
 const services = site.services;
+const language = pageLanguage(site);
 ---
 
 {
   services && (
-    <Section id="services" labelledby="services-title" tone="surface">
+    <Section id={section.id} labelledby={section.headingId} tone="surface">
       <SectionHeading
         eyebrow={services.eyebrow}
         headline={services.headline}
         intro={services.intro}
-        id="services-title"
-        class="services__head"
+        id={section.headingId}
       />
 
       <div class="services__grid">
@@ -32,7 +34,7 @@ const services = site.services;
                 <Icon name={service.icon} size={17} />
               </span>
               <span class="service__index" aria-hidden="true">
-                {formatIndex(index + 1, site.meta.locale)}
+                {language.index(index + 1)}
               </span>
             </div>
             <h3 class="service__title">{service.title}</h3>
@@ -42,7 +44,7 @@ const services = site.services;
         ))}
       </div>
 
-      {services.note && <p class="services__note">{services.note}</p>}
+      {services.note && <p class="section-note">{services.note}</p>}
     </Section>
   )
 }
