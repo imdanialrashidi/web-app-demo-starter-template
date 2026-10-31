@@ -59,9 +59,9 @@ export const naranjHouse = {
       footerInk: "#f2ebdc",
     },
     fonts: {
-      display: "markazi",
-      body: "vazirmatn",
-      emphasis: "markazi",
+      display: "estedad",
+      body: "estedad",
+      emphasis: "estedad",
     },
     shape: {
       media: "0.25rem",

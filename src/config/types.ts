@@ -20,8 +20,7 @@ export type FontFaceKey =
   | "frauncesItalic"
   | "manrope"
   | "bricolage"
-  | "vazirmatn"
-  | "markazi";
+  | "estedad";
 
 export type IconName =
   | "arrow-up-right"

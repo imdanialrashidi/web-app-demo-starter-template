@@ -2,8 +2,7 @@ import bricolageLatin from "../assets/fonts/bricolage-grotesque-latin.woff2?url"
 import frauncesLatin from "../assets/fonts/fraunces-latin.woff2?url";
 import frauncesItalicLatin from "../assets/fonts/fraunces-italic-latin.woff2?url";
 import manropeLatin from "../assets/fonts/manrope-latin.woff2?url";
-import markaziArabicLatin from "../assets/fonts/markazi-text-arabic-latin.woff2?url";
-import vazirmatnArabicLatin from "../assets/fonts/vazirmatn-arabic-latin.woff2?url";
+import estedadArabicLatin from "../assets/fonts/estedad-arabic-latin.woff2?url";
 import type { FontFaceKey } from "../config/types";
 
 interface FontFace {
@@ -44,18 +43,11 @@ export const fontFaces: Record<FontFaceKey, FontFace> = {
     style: "normal",
     weight: "200 800",
   },
-  vazirmatn: {
-    family: "Vazirmatn",
-    stack: '"Vazirmatn", "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif',
-    src: vazirmatnArabicLatin,
+  estedad: {
+    family: "Estedad",
+    stack: '"Estedad", "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif',
+    src: estedadArabicLatin,
     style: "normal",
     weight: "100 900",
-  },
-  markazi: {
-    family: "Markazi Text",
-    stack: '"Markazi Text", "Vazirmatn", "Iowan Old Style", "Palatino Linotype", Georgia, serif',
-    src: markaziArabicLatin,
-    style: "normal",
-    weight: "400 700",
   },
 };

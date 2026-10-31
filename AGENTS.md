@@ -139,9 +139,9 @@ client; add a new config so the examples remain useful reference material.
 - Always write meaningful alt text. If an image is unknown or absent, use the
   designed fallback rather than a broken source.
 - Fonts are local WOFF2 files registered in `src/lib/fonts.ts`. Include the
-  licence in `src/assets/fonts/licenses/` and update `CREDITS.md`. Vazirmatn and
-  Markazi Text cover Persian/Arabic and Latin; the other faces are Latin-only.
-  Add a subset when the client language needs another script.
+  licence in `src/assets/fonts/licenses/` and update `CREDITS.md`. Estedad covers
+  Persian/Arabic and Latin; the other faces are Latin-only. Add a subset when the
+  client language needs another script.
 - Do not add a dependency unless the requirement cannot be met with native HTML,
   CSS, and the existing Astro API. No UI framework by default; no animation or
   carousel library; no icon library duplication.

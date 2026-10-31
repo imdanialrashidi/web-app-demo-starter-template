@@ -122,7 +122,7 @@ starter into one client's site.
    demo wording and the demo disclosure.
 6. **Set the visual direction** through `theme`. Change the fonts, palette,
    radii, content width, section spacing, and the `hero.variant`. Persian demos
-   should start from the `vazirmatn` body face and the `markazi` display face.
+   start from the variable `estedad` face for display, body, and emphasis.
    Do not add client-specific CSS to shared components.
 7. **Add local images** under `src/assets/images/` and import them in the config.
    Provide alt text, captions where useful, and `position` for crops. Record
@@ -227,11 +227,15 @@ components.
 
 ### Changing fonts
 
-The default Persian theme uses Markazi Text (display and emphasis) and
-Vazirmatn (body and UI). The English examples use Fraunces + Manrope and
-Bricolage Grotesque + Manrope. Fonts are local WOFF2 variable files and are
-preloaded by the active theme. The Persian faces cover Arabic script and Latin,
-so mixed Persian/English copy keeps one visual voice.
+The default Persian theme uses Estedad (display, body, and emphasis). The English
+examples use Fraunces + Manrope and Bricolage Grotesque + Manrope. Fonts are
+local WOFF2 variable files and are preloaded by the active theme. Estedad covers
+Persian/Arabic and Latin, so mixed Persian/English copy keeps one visual voice.
+
+Estedad is an OFL-licensed, modern Iran Sans-style variable typeface. Commercial
+faces such as Iran Sans, IRANSansX, and Yekan Bakh are not bundled; if a client
+owns a licence, add the WOFF2 and licence text, register it in `src/lib/fonts.ts`,
+and use its key in the client theme.
 
 To add a face:
 
@@ -241,9 +245,9 @@ To add a face:
 3. Add the face key to `FontFaceKey` and use it in the client theme.
 4. Update `CREDITS.md`.
 
-Vazirmatn and Markazi Text include Persian/Arabic and Latin glyphs; the other
-faces are Latin-only. Add the correct subset and licence when a client's
-language requires another script.
+Estedad includes Persian/Arabic and Latin glyphs; the other faces are
+Latin-only. Add the correct subset and licence when a client's language requires
+another script.
 
 ## Images
 

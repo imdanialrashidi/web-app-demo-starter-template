@@ -32,17 +32,15 @@ alongside the fonts in `src/assets/fonts/licenses/`.
 
 | Font | Role | Source | Licence |
 | --- | --- | --- | --- |
-| Vazirmatn | Persian body and UI (Arabic + Latin) | [Vazirmatn release](https://github.com/rastikerdar/vazirmatn/releases) | [OFL 1.1](https://openfontlicense.org) |
-| Markazi Text | Persian display and emphasis (Arabic + Latin) | [Google Fonts](https://fonts.google.com/specimen/Markazi+Text) | [OFL 1.1](https://openfontlicense.org) |
+| Estedad | Persian display, body, and emphasis (Arabic + Latin) | [Estedad](https://github.com/aminabedi68/Estedad) | [OFL 1.1](https://openfontlicense.org) |
 | Fraunces | English display and emphasis | [Google Fonts](https://fonts.google.com/specimen/Fraunces) | [OFL 1.1](https://openfontlicense.org) |
 | Manrope | English body and UI | [Google Fonts](https://fonts.google.com/specimen/Manrope) | [OFL 1.1](https://openfontlicense.org) |
 | Bricolage Grotesque | English alternate display | [Google Fonts](https://fonts.google.com/specimen/Bricolage+Grotesque) | [OFL 1.1](https://openfontlicense.org) |
 
-The Latin faces were obtained from the Google Fonts CSS endpoint; Markazi Text
-was converted from the Google Fonts variable TTF to WOFF2. Vazirmatn came from
-its official release archive. If a client needs Cyrillic, another Arabic-script
-language, or an additional character set, add the appropriate subset and record
-its source in this file.
+The Latin faces were obtained from the Google Fonts CSS endpoint. Estedad came
+from its official GitHub repository as a variable WOFF2. If a client needs
+Cyrillic, another Arabic-script language, or an additional character set, add
+the appropriate subset and record its source in this file.
 
 ## Icons
 
