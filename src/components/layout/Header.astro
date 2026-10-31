@@ -1,0 +1,183 @@
+---
+import type { SiteConfig } from "../../config/types";
+import Button from "../ui/Button.astro";
+import Icon from "../ui/Icon.astro";
+import Logo from "../ui/Logo.astro";
+import { formatIndex, resolveUi } from "../../lib/i18n";
+import { base } from "../../lib/url";
+
+interface Props {
+  site: SiteConfig;
+}
+
+const { site } = Astro.props;
+const ui = resolveUi(site);
+
+const anchorHref = (href: string) =>
+  href.startsWith("#") ? `${base}${href}` : href;
+const headerAction = site.headerAction
+  ? { ...site.headerAction, href: anchorHref(site.headerAction.href) }
+  : undefined;
+---
+
+<a class="skip-link" href="#main">{ui.skipToContent}</a>
+
+<header class="site-header">
+  <div class="shell header-inner">
+    <Logo brand={site.brand} />
+
+    <nav class="desktop-nav" aria-label={ui.primaryNavigation}>
+      {
+        site.navigation.map((item) => (
+          <a class="nav-link" href={anchorHref(item.href)}>
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="header-actions">
+      {
+        headerAction && (
+          <Button
+            {...headerAction}
+            icon="arrow-up-right"
+            class="header-cta"
+          />
+        )
+      }
+      <button
+        class="menu-button"
+        type="button"
+        aria-label={ui.openMenu}
+        aria-haspopup="dialog"
+        aria-controls="site-menu"
+        aria-expanded="false"
+        data-menu-toggle
+      >
+        <Icon name="menu" size={20} />
+      </button>
+    </div>
+  </div>
+</header>
+
+<noscript>
+  <nav class="noscript-nav" aria-label={ui.primaryNavigation}>
+    <div class="shell noscript-nav__inner">
+      {site.navigation.map((item) => <a class="nav-link" href={anchorHref(item.href)}>{item.label}</a>)}
+      {headerAction && (
+        <a class="btn btn--accent" href={headerAction.href}>{headerAction.label}</a>
+      )}
+    </div>
+  </nav>
+</noscript>
+
+<dialog
+  class="menu-dialog"
+  id="site-menu"
+  aria-label={ui.siteMenu}
+  data-menu
+>
+  <div class="menu-shell">
+    <div class="menu-header">
+      <Logo brand={site.brand} showDescriptor={false} />
+      <button
+        class="menu-close"
+        type="button"
+        aria-label={ui.closeMenu}
+        autofocus
+        data-menu-close
+      >
+        <Icon name="close" size={20} />
+      </button>
+    </div>
+
+    <nav class="menu-links" aria-label={ui.mobileNavigation}>
+      {
+        site.navigation.map((item, index) => (
+          <a class="menu-link" href={anchorHref(item.href)}>
+            <span class="menu-link__index" aria-hidden="true">
+              {formatIndex(index + 1, site.meta.locale)}
+            </span>
+            <span>{item.label}</span>
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="menu-footer">
+      {headerAction && (
+        <Button {...headerAction} icon="arrow-up-right" class="w-full" />
+      )}
+      {site.contact && (
+        <a href={`mailto:${site.contact.details.email}`}>
+          <bdi dir="ltr">{site.contact.details.email}</bdi>
+        </a>
+      )}
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>("[data-menu-toggle]");
+  const dialog = document.querySelector<HTMLDialogElement>("[data-menu]");
+
+  if (toggle && dialog) {
+    const closeButton = dialog.querySelector<HTMLButtonElement>("[data-menu-close]");
+    const isOpen = () => dialog.hasAttribute("open");
+
+    const open = () => {
+      if (isOpen()) return;
+      dialog.showModal();
+      toggle.setAttribute("aria-expanded", "true");
+    };
+
+    const close = () => {
+      if (isOpen()) dialog.close();
+    };
+
+    toggle.addEventListener("click", open);
+    closeButton?.addEventListener("click", close);
+
+    dialog.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", close);
+    });
+
+    dialog.addEventListener("close", () => {
+      toggle.setAttribute("aria-expanded", "false");
+    });
+
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    desktop.addEventListener("change", (event) => {
+      if (event.matches) close();
+    });
+
+    // Keep keyboard focus inside the modal menu, including at the edges.
+    dialog.addEventListener("keydown", (event) => {
+      if (event.key !== "Tab") return;
+
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.getClientRects().length > 0);
+
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && isOpen()) close();
+    });
+  }
+</script>

@@ -1,247 +1,386 @@
-# DSH Workflow
+# Client Demo Factory
 
-A small, repository-independent coding workflow for [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness). Version 0.1 provides global instructions, six DSH skills, project documentation templates, a safe installer, and self-checks.
+A small, static-first, Persian-first starter for producing premium, mobile-first
+client website demos quickly. One Astro application, one typed client
+configuration, and a library of reusable editorial sections. Change the config,
+imagery, and design tokens; keep the components.
 
-It is not a plugin, daemon, MCP server, or custom multi-agent framework. It uses DSH's instruction loading, skill discovery, native tools, permissions, and optional subagents.
+Persian is the default language and the reference implementation: RTL layout,
+Persian typography, Persian numerals, localised interface strings, and a
+self-hosted Persian font pairing. The same components still render a clean LTR
+English site from the other two configs.
 
-## Why this exists
+The repository ships with three complete fictional examples:
 
-Coding agents commonly fail in predictable ways: they guess project commands, skip verification, produce noisy reviews, keep planning instead of implementing, or turn project context into an unmaintainable wall of instructions. DSH Workflow addresses those failure modes with a small set of rules and procedures:
+- **Naranj House** — the default Persian, RTL coastal guesthouse demo.
+- **Casa Marea** — a warm, serif-led English coastal guesthouse demo.
+- **Atelier Sora** — a dark, grotesque-led English interior studio demo.
 
-- direct implementation by default, with planning scaled to complexity and risk;
-- explicit acceptance criteria and repository-discovered verification commands;
-- evidence-driven review that prioritizes real defects over style;
-- a bounded repair loop instead of endless review rounds;
-- concise, repository-local project knowledge;
-- no silent authorization and no invented capabilities.
+All three use the same components and differ through their client configuration.
 
-See [docs/WORKFLOW.md](docs/WORKFLOW.md) for the execution model and [docs/DSH-CAPABILITY-MAP.md](docs/DSH-CAPABILITY-MAP.md) for the verified DSH behavior behind it.
+## Stack
 
-## Verified DSH integration
+- Astro `7.4.4`, static output
+- TypeScript `5.9.3` with Astro's strict config
+- Tailwind CSS `4.3.3` through the Vite plugin
+- Lucide icons via `@lucide/astro`
+- Astro's built-in image optimization (`sharp`)
+- Persian-first RTL with locale-aware UI strings, numerals, and typography
+- Native CSS transitions, scroll-driven enhancement, and `prefers-reduced-motion`
+- Native `<dialog>` and `<details>` for interaction; no UI framework or hydration
+- GitHub Actions deployment to GitHub Pages
 
-The workflow targets DSH `0.2.1-rc.2`. DSH is a developer preview, so re-verify before relying on another version.
+No CMS, backend, analytics, external font service, or runtime image dependency is
+included.
 
-| Mechanism | Location/behavior |
-| --- | --- |
-| Global instructions | `$DSH_HOME/AGENTS.md`, defaulting to `~/.dsh/AGENTS.md` |
-| User skills | `$DSH_HOME/skills/<name>/SKILL.md` |
-| Project instructions | `AGENTS.md` from the project root down to the working directory |
-| Model skill access | DSH's `skill` tool and injected skill catalog |
-| Explicit user invocation | `/quick-fix`, `/spec`, `/build`, `/verify`, `/review`, `/test-design` |
+## Requirements
 
-The `/name` form is DSH's user-invocable skill gesture. This repository does not generate slash-command files. See the capability map for evidence and for behavior that remains runtime-unverified.
-
-## Prerequisites
-
-- **DSH** installed and runnable (`npx @deepseek-ai/dsh web`, or another supported profile). Verified against `0.2.1-rc.2`.
-- **Node.js**, as required by your DSH installation.
-- **Bash 3.2 or newer**, Git, and standard Unix tools (`cp`, `cmp`, `find`, `grep`, `sed`, `awk`, `mktemp`).
-- **Linux or macOS.** Windows is not supported by the shell scripts; WSL and Git Bash are unverified.
-- No project dependencies are added by the workflow.
-
-## Installation
+- Node.js `>=22.23.4` (the deploy workflow uses Node 24)
+- npm `12.2.1` (declared in `packageManager`; the lockfile is committed)
 
 ```sh
-git clone https://github.com/imdanialrashidi/dsh-workflow.git
-cd dsh-workflow
-bash scripts/install.sh --dry-run
-bash scripts/install.sh
+npm ci
+npm run dev
 ```
 
-Start a new DSH session afterward. A new session ensures the global instruction baseline is loaded and the skill catalog is current.
-
-To use a non-default DSH home, either export the same variable DSH uses or pass the path explicitly:
+Open <http://localhost:4321>. The default client is Naranj House (Persian, RTL).
+For the English reference site:
 
 ```sh
-DSH_HOME=/path/to/dsh-home bash scripts/install.sh
-bash scripts/install.sh --dsh-home /path/to/dsh-home
+CLIENT=casa-marea npm run dev
 ```
 
-### What installation writes
+## Commands
+
+```sh
+npm run dev          # local development server
+npm run check        # Astro + TypeScript diagnostics
+npm run build        # production build in dist/
+npm run preview      # serve the production build
+npm run verify       # check, then build
+npm run build:alt    # build the alternate English example (Atelier Sora)
+```
+
+Switch the active client for any Astro command with `CLIENT`:
+
+```sh
+CLIENT=naranj-house npm run dev   # Persian, RTL (the default)
+CLIENT=casa-marea npm run dev     # English, LTR
+CLIENT=atelier-sora npm run build # English, LTR
+```
+
+This is POSIX shell syntax. On Windows, set the environment variable in the
+shell session or use a small wrapper script. The active client is selected at
+build time; only that client is rendered.
+
+## Project map
 
 ```text
-$DSH_HOME/AGENTS.md
-$DSH_HOME/skills/quick-fix/SKILL.md
-$DSH_HOME/skills/spec/SKILL.md
-$DSH_HOME/skills/build/SKILL.md
-$DSH_HOME/skills/verify/SKILL.md
-$DSH_HOME/skills/review/SKILL.md
-$DSH_HOME/skills/test-design/SKILL.md
+src/
+  config/
+    types.ts                 typed contract for every client
+    site.ts                  active client switch and registry
+    clients/
+      naranj-house.ts        default Persian RTL hospitality example
+      casa-marea.ts          English hospitality example
+      atelier-sora.ts        English studio example
+  lib/
+    i18n.ts                  locale dictionaries, direction, Intl formatting
+    fonts.ts                 self-hosted font faces and font stacks
+    theme.ts                 theme tokens + @font-face generation
+    url.ts                   deployment-base-aware URL helpers
+  styles/global.css          design system, layout, interactions, motion
+  components/
+    ui/                      Button, Media, Section, SectionHeading, Logo, Icon
+    layout/                  Header (mobile <dialog>) and Footer
+    sections/                reusable page sections + registry
+  layouts/BaseLayout.astro   head, metadata, social image, page shell
+  pages/index.astro          composes sections from the active client config
+  pages/404.astro            branded static not-found page
+  assets/images/             local, licensed photography
+  assets/fonts/              self-hosted WOFF2 files + licences
+public/                      favicon, apple touch icon, robots.txt, .nojekyll
+.github/workflows/deploy.yml GitHub Pages deployment
 ```
 
-It does not modify profiles, `cordis.patch.yml`, credentials, sessions, storages, or project files. It never uses `sudo`, downloads code, or runs a network command.
+## Create a client demo
 
-### Conflicts and backups
+Work from a copy of this repository for each client. Do not turn the canonical
+starter into one client's site.
 
-- An identical file is left unchanged.
-- A differing file is **not** overwritten by default. The installer reports the conflict and exits nonzero, after installing non-conflicting files.
-- `--force` replaces a conflicting file only after creating a timestamped backup next to it, such as `SKILL.md.bak.20261025184500`.
-- `--dry-run` reports planned actions and conflicts without creating or changing anything.
+1. **Read the brief.** Identify the primary action, required sections, visual
+   direction, content facts, and any assets supplied by the client.
+2. **Copy an example config** in `src/config/clients/` and rename it, for example
+   `src/config/clients/north-house.ts`. Change `key`.
+3. **Register it** in `src/config/site.ts` under `clients`.
+4. **Select and order sections** in the config's `sections` array. See the
+   section reference below. Update `navigation` so every link targets a rendered
+   section. Set `meta.locale` and, if needed, `meta.direction`; `rtl` is inferred
+   for Persian, Arabic, Hebrew, and Urdu locales.
+5. **Write the content** in the config. Keep names, offers, prices, policies, and
+   testimonials in one place. If the client supplied no real facts, keep the
+   demo wording and the demo disclosure.
+6. **Set the visual direction** through `theme`. Change the fonts, palette,
+   radii, content width, section spacing, and the `hero.variant`. Persian demos
+   should start from the `vazirmatn` body face and the `markazi` display face.
+   Do not add client-specific CSS to shared components.
+7. **Add local images** under `src/assets/images/` and import them in the config.
+   Provide alt text, captions where useful, and `position` for crops. Record
+   provenance in `CREDITS.md`.
+8. **Run the checks** below at 360, 390, 768, and 1440 widths, including the
+   primary interaction paths.
+9. **Build and preview** the production output, including the deployment base
+   path. Do not publish unless that is explicitly requested.
 
-Review a conflict before forcing replacement. The file may contain your own global instructions or a customized skill.
+Keep `demo.enabled` and the fictional-content note until the site contains only
+approved real client information. The contact form is simulated; keep its demo
+note unless a real form endpoint is implemented and tested.
 
-## Updating
+## Sections
 
-```sh
-git pull --ff-only
-bash scripts/install.sh --dry-run
-bash scripts/install.sh
-```
+Sections are selected by `sections: SectionId[]`. The supported ids and their
+configuration keys are:
 
-If a file changed upstream and locally, the default install reports a conflict and preserves your copy. Merge it manually, or use `--force` to replace it with a backup. Remove old backups manually when they are no longer useful.
-
-## Removal
-
-Remove only the files this workflow installed. Do not delete the whole skills directory, because it may contain your own skills.
-
-```sh
-DSH_HOME="${DSH_HOME:-$HOME/.dsh}"
-rm -f "$DSH_HOME/AGENTS.md"
-for skill in quick-fix spec build verify review test-design; do
-  rm -rf "$DSH_HOME/skills/$skill"
-done
-```
-
-If `--force` replaced a pre-existing `AGENTS.md`, restore your backup from the same directory. Start a new DSH session after removal.
-
-## Initialize a project
-
-The initializer creates a short project entry point and four focused documents:
-
-```sh
-bash scripts/init-project.sh /path/to/project --dry-run
-bash scripts/init-project.sh /path/to/project
-```
-
-It creates only:
-
-```text
-AGENTS.md
-docs/PRODUCT.md
-docs/ARCHITECTURE.md
-docs/DESIGN.md
-docs/QUALITY.md
-```
-
-Existing files are never overwritten, and there is no force mode. Fill the placeholders with real project information, remove sections that do not apply, and keep the files short enough that an agent can use them.
-
-The project template's `AGENTS.md` points to the other documents; DSH automatically loads the `AGENTS.md`/`CLAUDE.md` instruction chain, not arbitrary files under `docs/`. Do not assume other documents are injected automatically.
-
-## Usage
-
-DSH injects the available skills into the session and uses their descriptions to decide when to load one. You can also invoke a skill explicitly:
-
-```text
-/quick-fix Fix the null check in the CSV importer.
-/spec Add CSV export for the audit log, preserving existing filters.
-/build Implement the accepted CSV export design.
-/verify
-/review
-/test-design The export must handle empty results and a 50 MB stream.
-```
-
-If you prefer natural language, describe the task. The model should load the matching skill when its description applies.
-
-| Skill | Use when | Main output |
+| Section | Config key | Notes |
 | --- | --- | --- |
-| `quick-fix` | Small, clear, low-risk fix | Change, targeted check, diff review |
-| `spec` | Requirements or acceptance are unresolved | Outcome, criteria, scope, constraints, verification strategy |
-| `build` | The change is ready to implement | Coherent implementation and updated tests/docs |
-| `verify` | Validation is needed | Executed checks with passed/failed/blocked/unproven/unexecuted statuses |
-| `review` | A diff needs defect review | Evidence-backed findings and a bounded repair loop |
-| `test-design` | Coverage or failure modes need designing | Focused tests with meaningful failure detection |
+| `hero` | `hero` | Required first view; `split` or `immersive` variant |
+| `statement` | `statement` | Optional full-bleed image quote |
+| `story` | `story` | Editorial about section with facts and optional signature |
+| `services` | `services` | Responsive four-column or list service treatment |
+| `features` | `features` | Numbered places/process list |
+| `gallery` | `gallery` | CSS-column gallery with accessible lightbox |
+| `pricing` | `pricing` | Editorial rate/engagement rows, not a card grid |
+| `testimonials` | `testimonials` | Lead quote + supporting notes |
+| `faq` | `faq` | Native accessible `<details>` |
+| `contact` | `contact` | Contact details + simulated booking/inquiry form |
 
-A typical normal feature:
+To remove a section, remove its id from `sections`, remove the matching
+navigation item if present, and leave or delete its data. To reorder, reorder the
+ids. A section without matching data renders nothing; navigation links are not
+automatically rewritten, so keep them aligned.
 
-1. Define or confirm a few observable acceptance criteria.
-2. Implement the smallest coherent slice.
-3. Run the project's actual checks.
-4. Review the diff.
-5. Fix actionable findings, rerun affected checks, and re-review only the new changes.
+To add a section:
 
-For high-risk changes, add negative-path tests, a security review, and independent review with a fresh-context DSH subagent when available. Subagents are optional. See [docs/REVIEW-POLICY.md](docs/REVIEW-POLICY.md) and [docs/QUALITY-POLICY.md](docs/QUALITY-POLICY.md).
+1. Add its id to `SectionId` and its optional data type to `SiteConfig` in
+   `src/config/types.ts`.
+2. Create `src/components/sections/MySection.astro` that accepts `{ site }`.
+3. Register it in `src/components/sections/index.ts`.
+4. Add the data and id to the active client config and update `navigation`.
 
-## Architecture
+Use existing UI primitives and tokens first. New sections should stay
+client-agnostic and receive all copy through `site`.
 
-```text
-README.md                     Purpose, install/update/remove, usage
-AGENTS.md                     Development rules for this repository
-global/AGENTS.md              Short instructions installed as $DSH_HOME/AGENTS.md
-skills/                       Six runtime procedures, each with one SKILL.md
-docs/WORKFLOW.md              Decision model and phase transitions
-docs/DSH-CAPABILITY-MAP.md    Verified DSH capabilities and limitations
-docs/QUALITY-POLICY.md        Evidence, acceptance, and test standards
-docs/REVIEW-POLICY.md         Risk tiers, finding quality, repair limits
-docs/SECURITY.md              Permissions, secrets, destructive actions, CI
-templates/project/            Project AGENTS.md and docs scaffolds
-scripts/install.sh            Idempotent, conflict-aware global installer
-scripts/init-project.sh       Non-destructive project initializer
-scripts/check.sh              Self-validation and isolated script tests
-.github/workflows/quality.yml Minimal CI: checkout and scripts/check.sh
+## Branding and design tokens
+
+All client-specific visual choices live in `theme`:
+
+- `colors`: canvas, surface, ink, muted, accent, accent ink, line, tint,
+  on-image text, footer background, footer ink
+- `fonts`: display, body, and emphasis faces from `src/lib/fonts.ts`
+- `shape`: media/button radii and the arched hero option
+- `layout`: content width, gutters, and section spacing
+
+`src/lib/theme.ts` turns the config into CSS variables and generates only the
+`@font-face` rules and preloads the active theme uses. `global.css` maps those
+variables into Tailwind's theme and the shared design system.
+
+### Language, direction, and interface strings
+
+- `meta.locale` is the BCP 47 tag used for `<html lang>`, Open Graph, number and
+  date formatting, and the interface dictionary. Use `fa-IR` for the Persian
+  demo.
+- `meta.direction` is optional. It defaults from the locale (`fa`, `ar`, `he`,
+  `ur`, and similar languages become `rtl`); set it explicitly when the content
+  language and the intended flow differ.
+- `src/lib/i18n.ts` owns the Persian and English interface dictionaries, the
+  direction fallback, and `formatIndex`, `formatNumber`, `formatYear`, and
+  `ogLocale`. Components call `resolveUi(site)`; they never hardcode menu,
+  gallery, form, or footer labels.
+- Override a label for one client with the optional `ui` object. Nested form,
+  gallery, contact-detail, and not-found overrides are merged with the locale
+  defaults:
+
+```ts
+ui: {
+  contact: "تماس با ما",
+  form: { guests: "تعداد مهمان" },
+  gallery: { next: "تصویر بعدی" },
+},
 ```
 
-The installed footprint is intentionally limited to one global instruction file and six skill files. The repository documentation is for maintainers and users; it is not copied into every project.
+- Persian typography is applied with `:lang(fa)` rules at the end of
+  `global.css`: looser line height, no tracking or uppercase, larger small
+  labels, and a calmer display scale. Layout uses logical properties
+  (`margin-inline`, `inset-inline`, `border-inline`), so the same components
+  mirror cleanly for English.
+- Put Latin identifiers such as emails, phone numbers, and URLs inside
+  `<bdi dir="ltr">` in RTL prose. Inputs that accept Latin values use
+  `dir="ltr"`. Native `type="date"` controls follow the browser's locale; add a
+  Jalali picker only when a client needs one.
+- To add another language, add its dictionary in `src/lib/i18n.ts`, add it to
+  `languageOf`, and set the locale in the client config. Components do not need
+  changes.
 
-## Verifying this repository
+A new colour token needs updates in the theme type, all example configs,
+`themeCss`, and the relevant CSS. Avoid ad-hoc colour overrides in individual
+components.
+
+### Changing fonts
+
+The default Persian theme uses Markazi Text (display and emphasis) and
+Vazirmatn (body and UI). The English examples use Fraunces + Manrope and
+Bricolage Grotesque + Manrope. Fonts are local WOFF2 variable files and are
+preloaded by the active theme. The Persian faces cover Arabic script and Latin,
+so mixed Persian/English copy keeps one visual voice.
+
+To add a face:
+
+1. Add the licensed WOFF2 file to `src/assets/fonts/` and its licence text to
+   `src/assets/fonts/licenses/`.
+2. Add an import and metadata entry in `src/lib/fonts.ts`.
+3. Add the face key to `FontFaceKey` and use it in the client theme.
+4. Update `CREDITS.md`.
+
+Vazirmatn and Markazi Text include Persian/Arabic and Latin glyphs; the other
+faces are Latin-only. Add the correct subset and licence when a client's
+language requires another script.
+
+## Images
+
+Client images are imported from `src/assets/images/` and passed through the
+`Media` component, so Astro can generate responsive WebP output. The hero image
+is eager and high priority; all gallery and below-the-fold images are lazy. The
+gallery lightbox requests the larger image only when opened.
+
+Guidelines:
+
+- Use local, licensed files. Do not use runtime remote image URLs.
+- Provide meaningful `alt` text for every image; decorative text should not be
+  embedded only in the photograph.
+- Use `position` to control crops where the focal point is off-centre.
+- Keep enough source resolution for the largest rendered size, but avoid
+  unnecessary multi-megabyte originals.
+- If an image is omitted, `Media` renders a designed, accessible fallback.
+- Update `CREDITS.md` with the source and licence for every new file.
+
+## Interaction and accessibility
+
+- The mobile menu is a native `<dialog>`: focus-trapped, Escape-closable, and
+  restores focus.
+- FAQ items use native `<details>`; no JavaScript is required.
+- The gallery is visible without JavaScript. The lightbox adds keyboard arrows,
+  Escape, focus management, and a live caption. Arrow direction follows the
+  document direction, so left/right mean the visible previous/next image in both
+  RTL and LTR.
+- The form is explicitly simulated. It validates natively, prevents submission,
+  shows the configured success message, and sends/stores nothing.
+- Motion uses transform/opacity, respects `prefers-reduced-motion`, and the
+  scroll reveal is progressive enhancement with `animation-timeline`.
+- Use semantic headings, visible focus rings, 44px minimum interactive targets,
+  and sufficient contrast when changing the palette.
+- Directional icons mirror in RTL; do not add physical `left`/`right` rules when
+  a logical property expresses the same intent.
+
+If a future demo needs genuinely stateful UI, add one small Svelte island only
+when the requirement cannot be met with native HTML. Do not install a UI
+framework by default.
+
+## Deployment
+
+### GitHub Pages (project repository)
+
+The included workflow deploys on every push to `main` and can also be run
+manually. In the repository, set **Settings → Pages → Source** to **GitHub
+Actions**.
+
+`astro.config.mjs` derives both values from the GitHub environment:
+
+- `site`: `https://<owner>.github.io`
+- `base`: `/<repository>/`
+
+The workflow pins `actions/checkout`, `withastro/action`, and
+`actions/deploy-pages` to commit SHAs, uses Node 24, npm 12.2.1, the committed
+lockfile, and runs `npm run verify` before uploading. It requests only the
+permissions required for Pages.
+
+### User site or organization site
+
+A repository named `<owner>.github.io` is detected and built at the root path.
+No configuration change is needed.
+
+### Custom domain
+
+1. Add the domain as one line in `public/CNAME`, for example
+   `demos.example.com`.
+2. Configure DNS as documented by GitHub Pages.
+3. Keep the Pages source set to GitHub Actions.
+
+`astro.config.mjs` reads `public/CNAME` and sets `site` to the custom domain and
+`base` to `/`. Alternatively, override explicitly:
 
 ```sh
-bash scripts/check.sh
+SITE_URL=https://demos.example.com BASE_PATH=/ npm run build
 ```
 
-The check validates:
+### Local project-path verification
 
-- required files and document headings;
-- skill frontmatter, kebab-case names, allowed keys, non-empty bodies, and one-file bundle layout;
-- shell syntax and executable bits;
-- cross-document skill references;
-- the CI workflow's pinned checkout SHA, read-only permission, and no secrets;
-- installer help, dry run, installation, idempotence, conflict handling, backups, symlink safety, path override, empty-path rejection, and root-path rejection;
-- project initializer dry run, non-destructive output, repeatability, and missing-target rejection;
-- that isolated test runs do not modify seeded credentials or profile files.
+```sh
+SITE_URL=https://OWNER.github.io BASE_PATH=/REPO/ npm run build
+BASE_PATH=/REPO/ npm run preview
+```
 
-CI runs the same script on Ubuntu. It is intentionally minimal and uses no secrets. The check is not a substitute for project-level verification: it does not build an arbitrary repository, start DSH with a model, or exercise a project's tests. Project-level verification must discover those commands from the project itself.
+Open the URL printed by Astro, including the `/REPO/` path. Anchors, fonts,
+favicon, scripts, gallery full images, and social metadata should all resolve
+under that prefix. The 404 page is emitted as `dist/404.html` and its button
+returns to the site root.
 
-## Troubleshooting
+Environment overrides are useful for other static hosts as well. `SITE_URL` is
+used for canonical and Open Graph URLs; `BASE_PATH` controls every generated
+asset path.
 
-| Symptom | Check |
-| --- | --- |
-| Skills do not appear | Confirm `$DSH_HOME/skills/<name>/SKILL.md` exists and the frontmatter `name` matches the directory. Start a new session. A same-name project skill shadows the global one. |
-| `/name` is treated as plain text | The name must be user-invocable (default) and exist in the current workspace catalog. Check the skill root and name. |
-| Global instructions are not applied | Confirm the file is at `$DSH_HOME/AGENTS.md` and DSH is using the same `$DSH_HOME`. Start a new session; global instructions are not watched continuously. |
-| Installer reports a conflict | Your file differs. Review it, merge manually, or use `--force` and restore from the generated backup if needed. |
-| Installer refuses the target | The path is the filesystem root, empty, or not a directory. Use a real `$DSH_HOME` path. |
-| Project initializer skips a file | The file already exists. It is preserved by design; merge the template manually if appropriate. |
-| `bash: ...` syntax errors | The scripts require Bash 3.2 or newer. On Windows, use WSL; native Windows is unsupported. |
-| `dsh: command not found` | Install Node.js and run DSH through `npx @deepseek-ai/dsh web` or your installed command. This repository does not install DSH. |
-| A check is denied | DSH's approval and sandbox controls apply. Report the check as blocked; do not bypass the policy. |
-| CI fails but local checks pass | Check the Bash version and working directory, and run `bash scripts/check.sh` from the repository root. Report the exact failing check. |
+## Verification
 
-## Design decisions and trade-offs
+Run these from the repository root:
 
-- **Instructions and skills, not a plugin.** This keeps installation portable and avoids duplicating DSH's orchestration, permission, and tool layers.
-- **Direct implementation by default.** Planning is optional and scaled to risk; the workflow does not require a specification for every change.
-- **Evidence over claims.** Verification distinguishes passed, failed, blocked, unproven, and unexecuted checks.
-- **Review is bounded.** Important findings require a concrete failure scenario; repairs are capped at two rounds and re-review is diff-only.
-- **Subagents are optional.** They are used for genuinely independent work such as fresh-context review, not as a required stage.
-- **No universal test runner.** The workflow discovers each project's own commands instead of imposing a language or build system.
-- **Short context, linked detail.** The global file is concise; project knowledge is structured and local.
+```sh
+npm run check
+npm run build                    # Persian default
+CLIENT=casa-marea npm run build  # English LTR
+CLIENT=atelier-sora npm run build
+npm run verify
+```
 
-## Security
+Then inspect the production preview:
 
-See [docs/SECURITY.md](docs/SECURITY.md). The workflow does not grant approvals, bypass sandboxes, or authorize destructive actions. DSH's own controls remain authoritative.
+```sh
+npm run preview
+```
 
-## Status and limitations
+Recommended browser checks:
 
-- Version 0.1, verified against DSH `0.2.1-rc.2` on Linux.
-- DSH is a developer preview; skill paths, defaults, and tool names can change.
-- The DSH instruction paths, skill format, and precedence were verified from source, official documentation, live configuration, and direct calls to the installed loader and skill-provider APIs. No isolated model session was run, so the model-facing catalog message and `/name` injection remain runtime-unverified.
-- The GitHub Actions workflow was validated locally and by content checks, not by a GitHub-hosted run.
-- macOS, WSL, and Windows behavior are unverified.
-- The workflow improves discipline; it does not guarantee correctness, security, or review completeness.
+- 360px, 390px, 768px, and 1440px widths: no horizontal overflow, readable type,
+  primary CTA visible, touch targets at least 44px.
+- Repeat the layout checks in both directions: the Persian default is RTL and
+  the English configs are LTR. Confirm menu order, form labels, gallery arrows,
+  and footer alignment mirror correctly.
+- Open/close the mobile menu with touch and Escape; tab focus stays inside.
+- Open a gallery image, use arrow keys, close with Escape; the full image loads.
+- Open and close FAQ items with keyboard.
+- Submit the form empty and complete; verify native validation and the explicit
+  simulated-success message.
+- Emulate `prefers-reduced-motion: reduce` and confirm content remains visible
+  and animation is effectively disabled.
+- Build with the repository base path and repeat the link/asset checks.
 
-## Research and references
+Lighthouse can be run against the production preview, but mobile 90+ is a goal,
+not a guarantee. Report measured results with the viewport, throttling, build
+path, and date used.
 
-- DSH repository and documentation: [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)
-- Anthropic, [How the Claude Code team does code review](https://claude.dev/blog/solving-code-review-at-anthropic/)
-- OpenAI, [Harness engineering](https://openai.com/index/harness-engineering/) (original returned HTTP 403 on 2026-10-25; content was read through a text mirror, as noted in the capability map)
-- GitHub, [Secure use reference for GitHub Actions](https://docs.github.com/en/actions/reference/security/secure-use)
+## Delivery boundary
+
+The starter is ready to be copied for a new client after the checks above pass.
+This repository does not commit, push, publish, or deploy. Deployment is a
+separate, explicitly approved action.
+
+See [CREDITS.md](CREDITS.md) for photography and font licensing. See
+[AGENTS.md](AGENTS.md) for the agent operating rules.

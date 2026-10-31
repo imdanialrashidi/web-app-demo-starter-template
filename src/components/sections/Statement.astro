@@ -1,0 +1,51 @@
+---
+import type { SiteConfig } from "../../config/types";
+import Eyebrow from "../ui/Eyebrow.astro";
+import Media from "../ui/Media.astro";
+import { resolveUi } from "../../lib/i18n";
+
+interface Props {
+  site: SiteConfig;
+}
+
+const { site } = Astro.props;
+const statement = site.statement;
+const ui = resolveUi(site);
+const hasImage = Boolean(statement?.image?.src);
+---
+
+{
+  statement && (
+    <section
+      class:list={["statement", hasImage && "statement--image"]}
+      aria-label={statement.eyebrow}
+    >
+      {statement.image?.src && (
+        <div class="statement__media">
+          <Media
+            image={statement.image.src}
+            alt={statement.image.alt}
+            position={statement.image.position}
+            ratio="16 / 9"
+            sizes="100vw"
+            widths={[480, 720, 960, 1440, 1920]}
+            quality={80}
+            unavailableLabel={ui.imageUnavailable}
+          />
+        </div>
+      )}
+
+      <div class:list={["shell", "statement__inner"]}>
+        <Eyebrow text={statement.eyebrow} />
+        <blockquote>
+          <p class="statement__quote">{statement.quote}</p>
+          <footer class="statement__attribution">{statement.attribution}</footer>
+        </blockquote>
+      </div>
+
+      {statement.image?.caption && hasImage && (
+        <p class="statement__caption">{statement.image.caption}</p>
+      )}
+    </section>
+  )
+}

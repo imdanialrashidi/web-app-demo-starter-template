@@ -1,0 +1,78 @@
+---
+import type { SiteConfig } from "../../config/types";
+import { formatYear, resolveUi } from "../../lib/i18n";
+import { base } from "../../lib/url";
+import Logo from "../ui/Logo.astro";
+
+const anchorHref = (href: string) =>
+  href.startsWith("#") ? `${base}${href}` : href;
+
+interface Props {
+  site: SiteConfig;
+}
+
+const { site } = Astro.props;
+const ui = resolveUi(site);
+const year = formatYear(site.meta.locale);
+const contact = site.contact;
+
+const footerLinks = [...site.navigation, { label: ui.contact, href: "#contact" }].filter(
+  (item, index, items) => items.findIndex((candidate) => candidate.href === item.href) === index,
+);
+---
+
+<footer class="site-footer">
+  <div class="shell">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <Logo brand={site.brand} href={base} />
+        <p class="footer__tagline">{site.footer.tagline}</p>
+      </div>
+
+      <nav class="footer__nav" aria-label={ui.footerNavigation}>
+        <div>
+          <p class="footer__heading">{ui.explore}</p>
+          <div class="footer__links">
+            {footerLinks.map((item) => <a href={anchorHref(item.href)}>{item.label}</a>)}
+          </div>
+        </div>
+        <div>
+          <p class="footer__heading">{ui.elsewhere}</p>
+          <div class="footer__links">
+            <a href={`${base}#top`}>{ui.backToTop}</a>
+            <a href={site.footer.photoCredit.href} target="_blank" rel="noreferrer">
+              {site.footer.photoCredit.label}
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      {contact && (
+        <div class="footer__contact">
+          <p class="footer__heading">{ui.findUs}</p>
+          <a href={`mailto:${contact.details.email}`}>
+            <bdi dir="ltr">{contact.details.email}</bdi>
+          </a>
+          <address>{contact.details.address}</address>
+          <p>{contact.details.hours}</p>
+        </div>
+      )}
+    </div>
+
+    <p class="footer__wordmark" aria-hidden="true">{site.brand.name}</p>
+
+    <div class="footer__bottom">
+      <div>
+        {
+          site.demo.enabled && (
+            <p class="footer__demo-note">{site.demo.note}</p>
+          )
+        }
+        <p class="footer__meta">
+          <span>© {year} {site.brand.name}</span>
+          <span>{ui.staticNoTracking}</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,52 @@
+---
+import type { SiteConfig } from "../../config/types";
+import Eyebrow from "../ui/Eyebrow.astro";
+import HeadlineText from "../ui/Headline.astro";
+import Icon from "../ui/Icon.astro";
+import Section from "../ui/Section.astro";
+import { formatIndex } from "../../lib/i18n";
+
+interface Props {
+  site: SiteConfig;
+}
+
+const { site } = Astro.props;
+const features = site.features;
+---
+
+{
+  features && (
+    <Section id="features" labelledby="features-title">
+      <div class="features__layout">
+        <div class="features__head">
+          <Eyebrow text={features.eyebrow} />
+          <h2 id="features-title" class="display display--lg">
+            <HeadlineText headline={features.headline} />
+          </h2>
+          {features.intro && <p class="lede">{features.intro}</p>}
+        </div>
+
+        <div class="features__list">
+          {features.items.map((feature, index) => (
+            <article class="feature">
+              <span class="feature__icon" aria-hidden="true">
+                {feature.icon ? (
+                  <Icon name={feature.icon} size={19} />
+                ) : (
+                  <span class="feature__index">
+                    {formatIndex(index + 1, site.meta.locale)}
+                  </span>
+                )}
+              </span>
+              <div class="feature__body">
+                {feature.meta && <p class="feature__meta">{feature.meta}</p>}
+                <h3 class="feature__title">{feature.title}</h3>
+                <p class="feature__description">{feature.description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </Section>
+  )
+}

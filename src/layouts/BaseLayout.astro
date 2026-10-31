@@ -1,0 +1,115 @@
+---
+import { getImage } from "astro:assets";
+import "../styles/global.css";
+import type { SiteConfig } from "../config/types";
+import { site as activeSite } from "../config/site";
+import Footer from "../components/layout/Footer.astro";
+import Header from "../components/layout/Header.astro";
+import { themeCss, themeFontFaces } from "../lib/theme";
+import { ogLocale, resolveDirection } from "../lib/i18n";
+import { base, withBase } from "../lib/url";
+
+interface Props {
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+  site?: SiteConfig;
+}
+
+const {
+  title = activeSite.meta.title,
+  description = activeSite.meta.description,
+  noindex = false,
+  site = activeSite,
+} = Astro.props;
+
+const siteUrl = Astro.site ?? new URL(Astro.url.origin);
+const baseWithoutSlash = base.endsWith("/") ? base.slice(0, -1) : base;
+
+function withDeploymentBase(pathname: string) {
+  if (!baseWithoutSlash) return pathname;
+  if (pathname === baseWithoutSlash || pathname.startsWith(`${baseWithoutSlash}/`)) {
+    return pathname;
+  }
+  return withBase(pathname);
+}
+
+const canonical = new URL(withDeploymentBase(Astro.url.pathname), siteUrl).href;
+const fonts = themeFontFaces(site.theme);
+const direction = resolveDirection(site);
+
+let ogImageUrl: string | undefined;
+let ogImageAlt: string | undefined;
+
+if (!noindex && site.hero.image.src) {
+  const socialImage = await getImage({
+    src: site.hero.image.src,
+    width: 1200,
+    height: 630,
+    fit: "cover",
+    format: "jpg",
+    quality: 82,
+  });
+  const socialPath = withDeploymentBase(socialImage.src);
+  ogImageUrl = new URL(socialPath, siteUrl).href;
+  ogImageAlt = site.hero.image.alt;
+}
+---
+
+<!doctype html>
+<html lang={site.meta.locale} dir={direction}>
+  <head>
+    <script is:inline>document.documentElement.classList.add("js");</script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content={site.theme.colors.canvas} />
+    <meta name="color-scheme" content={site.theme.mode} />
+    <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
+    {site.meta.keywords && <meta name="keywords" content={site.meta.keywords.join(", ")} />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={withBase("/favicon.svg")} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={withBase("/apple-touch-icon.png")} />
+
+    {
+      fonts.map((face) => (
+        <link
+          rel="preload"
+          href={face.src}
+          as="font"
+          type="font/woff2"
+          crossorigin="anonymous"
+        />
+      ))
+    }
+
+    <style is:inline set:html={themeCss(site.theme)} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={site.brand.name} />
+    <meta property="og:locale" content={ogLocale(site.meta.locale)} />
+    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+    {ogImageUrl && <meta property="og:image:width" content="1200" />}
+    {ogImageUrl && <meta property="og:image:height" content="630" />}
+    {ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImageUrl && <meta name="twitter:image" content={ogImageUrl} />}
+    {ogImageAlt && <meta name="twitter:image:alt" content={ogImageAlt} />}
+  </head>
+
+  <body>
+    <Header site={site} />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer site={site} />
+  </body>
+</html>
